@@ -1,0 +1,30 @@
+{
+  "name": "event-dispatcher",
+  "version": "0.0.1",
+  "description": "An event dispatcher aimed for AOP.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/viczam/event-dispatcher.git"
+  },
+  "keywords": [
+    "AOP",
+    "events",
+    "event",
+    "emitter",
+    "microservices"
+  ],
+  "author": "Victor Zamfir <zamfir.victor@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/viczam/event-dispatcher/issues"
+  },
+  "homepage": "https://github.com/viczam/event-dispatcher#readme",
+  "dependencies": {
+    "joi": "^8.0.5",
+    "lodash": "^4.11.1"
+  }
+}
