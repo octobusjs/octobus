@@ -6,29 +6,27 @@ const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
 
 const normalizeEvent = (event, delimiter) => (Array.isArray(event) ? event.join(delimiter) : event);
 
-const defaultProcessParams = (params, config = {}) => {
-  const { defaultParams, schema } = config;
-  let finalParams = params;
-
-  if (defaultParams) {
-    finalParams = Object.assign({}, defaultParams, params);
-  }
-
-  if (schema) {
-    const { error, value } = Joi.validate(finalParams, schema);
-    if (error) {
-      throw error;
-    }
-
-    finalParams = value;
-  }
-
-  return finalParams;
-};
-
 const defaultOptions = {
   delimiter: '.',
-  processParams: defaultProcessParams
+  processParams(params, config = {}) {
+    const { defaultParams, schema } = config;
+    let finalParams = params;
+
+    if (defaultParams) {
+      finalParams = Object.assign({}, defaultParams, params);
+    }
+
+    if (schema) {
+      const { error, value } = Joi.validate(finalParams, schema);
+      if (error) {
+        throw error;
+      }
+
+      finalParams = value;
+    }
+
+    return finalParams;
+  }
 };
 
 export default (options = {}) => {
