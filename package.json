@@ -4,7 +4,7 @@
   "description": "An event dispatcher aimed for AOP.",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --compilers js:babel-register --require ./test/helper.js"
+    "test": "mocha --compilers js:babel-register --require ./test/helper.js --watch"
   },
   "repository": {
     "type": "git",

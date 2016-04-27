@@ -8,6 +8,11 @@ const normalizeEvent = (event, delimiter) => (Array.isArray(event) ? event.join(
 
 const defaultOptions = {
   delimiter: '.',
+
+  createEventEmitter() {
+    return new EventEmitter();
+  },
+
   processParams(params, config = {}) {
     const { defaultParams, schema } = config;
     let finalParams = params;
@@ -29,8 +34,9 @@ const defaultOptions = {
   }
 };
 
-export default (options = {}) => {
-  const { delimiter, processParams } = Object.assign({}, defaultOptions, options);
+export default (_options = {}) => {
+  const options = Object.assign({}, defaultOptions, _options);
+  const { delimiter, processParams, createEventEmitter } = options;
 
   const store = {
     subscribers: [],
@@ -40,11 +46,13 @@ export default (options = {}) => {
     matchersMap: {}
   };
 
-  const emitter = new EventEmitter();
+  const emitter = createEventEmitter();
   const on = (...args) => emitter.on(...args);
   const emit = (event, ...args) => emitter.emit(event, ...[args.concat([{ dispatch, lookup }])]);
-  const before = (event, ...args) => emit(`before:${event}`, ...args);
-  const after = (event, ...args) => emit(`after:${event}`, ...args);
+  const before = (event, ...args) => on(`before:${event}`, ...args);
+  const after = (event, ...args) => on(`after:${event}`, ...args);
+  const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
+  const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
 
   const addSubscriber = (subscriber) => {
     let subscriberIndex = store.subscribers.findIndex(({ _handler, _config }) => (
@@ -147,9 +155,9 @@ export default (options = {}) => {
 
     const subscribers = getEventSubscribersMatching(event);
 
-    before(event, params, { dispatch, lookup });
+    emitBefore(event, params, { dispatch, lookup });
     return cascadeSubscribers(subscribers, params).then((result) => {
-      after(event, result, { dispatch, lookup });
+      emitAfter(event, result, { dispatch, lookup });
 
       return result;
     });
