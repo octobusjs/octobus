@@ -67,6 +67,12 @@ export default (_options = {}) => {
   };
 
   const subscribe = (event, handler, config = {}) => {
+    if (typeof handler !== 'function') {
+      throw new Error(`
+        Event handler for ${event.toString()} has to be a function (got ${typeof handler} instead)!
+      `);
+    }
+
     event = normalizeEvent(event, delimiter); // eslint-disable-line no-param-reassign
     const subscriber = { handler, config };
     const subscriberIndex = addSubscriber(subscriber);

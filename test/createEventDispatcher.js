@@ -6,9 +6,8 @@ import createEventDispatcher from '../createEventDispatcher';
 describe('eventDispatcher', () => {
   let dispatcher;
 
-  beforeEach((done) => {
+  beforeEach(() => {
     dispatcher = createEventDispatcher();
-    done();
   });
 
   it('it returns the result', () => {
@@ -137,6 +136,33 @@ describe('eventDispatcher', () => {
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result.trim()).to.equal('first second');
+    });
+  });
+
+  it('can subscribe to a map of handlers', () => {
+    const namespace = 'some.random.namespace';
+
+    dispatcher.subscribeMap(`${namespace}.Something`, {
+      foo({ dispatch, params = {} }) {
+        return dispatch(`${namespace}.Something.bar`, Object.assign({}, params, {
+          foo: true
+        }));
+      },
+
+      bar({ params = {} }) {
+        return Object.assign({}, params, {
+          bar: true
+        });
+      }
+    });
+
+    const Something = dispatcher.lookup(`${namespace}.Something`);
+
+    return Something.foo().then((result) => {
+      expect(result).to.deep.equal({
+        foo: true,
+        bar: true
+      });
     });
   });
 });
