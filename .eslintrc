@@ -1,0 +1,22 @@
+{
+  "parser": "babel-eslint",
+  "extends": "airbnb",
+  "env": {
+    "es6": true,
+    "browser": true,
+    "mocha": true,
+    "node": true
+  },
+  "rules": {
+    "id-length": [2, {"min": 1}],
+    "comma-dangle": [2, "never"],
+    "no-shadow": [2, {
+      "allow": ["done", "next", "err", "error", "server", "callback", "cb"]
+    }],
+    "object-curly-spacing": [2, "always"],
+    "no-use-before-define": 0,
+    "indent": 1
+  },
+  "globals": {
+  }
+}
