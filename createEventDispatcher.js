@@ -49,8 +49,8 @@ export default (_options = {}) => {
   const emitter = createEventEmitter();
   const on = (...args) => emitter.on(...args);
   const emit = (event, ...args) => emitter.emit(event, ...[args.concat([{ dispatch, lookup }])]);
-  const before = (event, ...args) => on(`before:${event}`, ...args);
-  const after = (event, ...args) => on(`after:${event}`, ...args);
+  const onBefore = (event, ...args) => on(`before:${event}`, ...args);
+  const onAfter = (event, ...args) => on(`after:${event}`, ...args);
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
   const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
 
@@ -232,6 +232,7 @@ export default (_options = {}) => {
   };
 
   return {
-    emit, dispatch, on, before, after, subscribe, unsubscribe, subscribeMap, lookup
+    emit, emitBefore, emitAfter, on, onBefore, onAfter,
+    dispatch, subscribe, unsubscribe, subscribeMap, lookup
   };
 };

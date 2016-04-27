@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import createEventDispatcher from '../createEventDispatcher';
+import createEventDispatcher from '../index';
 
 describe('eventDispatcher', () => {
   let dispatcher;
@@ -22,8 +22,8 @@ describe('eventDispatcher', () => {
     const before = sinon.spy();
     const after = sinon.spy();
 
-    dispatcher.before('test', before);
-    dispatcher.after('test', after);
+    dispatcher.onBefore('test', before);
+    dispatcher.onAfter('test', after);
 
     const promise = dispatcher.dispatch('test');
     expect(before.called).to.be.true();
