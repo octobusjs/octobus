@@ -153,7 +153,7 @@ export default (_options = {}) => {
   );
 
   const dispatch = (event, params) => {
-    event = normalizeEvent(event, delimiter); // eslint-disable-line
+    event = normalizeEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
     if (typeof event !== 'string') {
       throw new Error('You can only dispatch string event names!');
