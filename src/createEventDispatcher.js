@@ -4,7 +4,23 @@ import EventEmitter from 'events';
 
 const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
 
-const normalizeEvent = (event, delimiter) => (Array.isArray(event) ? event.join(delimiter) : event);
+const normalizeEvent = (event, delimiter) => {
+  Joi.assert(event, [
+    Joi.string().invalid(RESTRICTED_EVENTS),
+    Joi.array().min(1).items(Joi.string()),
+    Joi.object().type(RegExp)
+  ]);
+
+  if (Array.isArray(event)) {
+    return event.map((ev) => normalizeEvent(ev, delimiter)).join(delimiter);
+  }
+
+  if (typeof event === 'string') {
+    return event.trim();
+  }
+
+  return event;
+};
 
 const defaultOptions = {
   delimiter: '.',
@@ -22,12 +38,7 @@ const defaultOptions = {
     }
 
     if (schema) {
-      const { error, value } = Joi.validate(finalParams, schema);
-      if (error) {
-        throw error;
-      }
-
-      finalParams = value;
+      finalParams = Joi.attempt(finalParams, schema);
     }
 
     return finalParams;
@@ -39,7 +50,6 @@ export default (_options = {}) => {
   const { delimiter, processParams, createEventEmitter } = options;
 
   const store = {
-    subscribers: [],
     eventsMap: {},
     eventsTree: {},
     matchers: [],
@@ -54,18 +64,6 @@ export default (_options = {}) => {
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
   const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
 
-  const addSubscriber = (subscriber) => {
-    let subscriberIndex = store.subscribers.findIndex(({ _handler, _config }) => (
-      subscriber.handler === _handler && subscriber.config === _config
-    ));
-
-    if (subscriberIndex === -1) {
-      subscriberIndex = store.subscribers.push(subscriber) - 1;
-    }
-
-    return subscriberIndex;
-  };
-
   const subscribe = (event, handler, config = {}) => {
     if (typeof handler !== 'function') {
       throw new Error(`
@@ -75,7 +73,6 @@ export default (_options = {}) => {
 
     event = normalizeEvent(event, delimiter); // eslint-disable-line no-param-reassign
     const subscriber = { handler, config };
-    const subscriberIndex = addSubscriber(subscriber);
 
     if (event instanceof RegExp) {
       const matcher = event.toString();
@@ -85,20 +82,14 @@ export default (_options = {}) => {
         store.matchersMap[matcher] = [];
       }
 
-      store.matchersMap[matcher].unshift(subscriberIndex);
+      store.matchersMap[matcher].unshift(subscriber);
     } else if (typeof event === 'string') {
-      if (RESTRICTED_EVENTS.indexOf(event) > -1) {
-        throw new Error(`Forbidden event: ${event} (${RESTRICTED_EVENTS.join(',')})`);
-      }
-
       if (!Array.isArray(store.eventsMap[event])) {
         store.eventsMap[event] = [];
         _.set(store.eventsTree, event, store.eventsMap[event]);
       }
 
-      store.eventsMap[event].unshift(subscriberIndex);
-    } else {
-      throw new Error(`Can't handle event ${event} of type ${typeof event}.`);
+      store.eventsMap[event].unshift(subscriber);
     }
 
     emit('subscribed', event, subscriber);
@@ -116,7 +107,14 @@ export default (_options = {}) => {
     }, {})
   );
 
-  const unsubscribe = (event, handler) => {
+  const removeSubscriberFromMap = (map, event, handler) => {
+    const index = map[event].findIndex((subscriber) => subscriber.handler === handler);
+    if (index > -1) {
+      map[event].splice(index, 1);
+    }
+  };
+
+  const unsubscribe = (event, handler = null) => {
     if (!handler) {
       if (typeof event === 'string') {
         delete store.eventsMap[event];
@@ -124,39 +122,27 @@ export default (_options = {}) => {
         delete store.matchersMap[event];
       }
     } else {
-      const subscriberIndex = store.subscribers.find(({ _handler }) => _handler === handler);
-      store.subscribers.splice(subscriberIndex, 1);
-
-      if (typeof event === 'string') {
-        store.eventsMap[event].splice(store.eventsMap[event].indexOf(subscriberIndex), 1);
-      } else {
-        store.matchersMap[event].splice(store.matchersMap[event].indexOf(subscriberIndex), 1);
-      }
+      const map = typeof event === 'string' ? store.eventsMap : store.matchersMap;
+      removeSubscriberFromMap(map, event, handler);
     }
 
     emit('unsubscribed', event, handler);
   };
 
-  const getEventSubscribers = (event) => (
-    (store.eventsMap[event] || []).map((index) => store.subscribers[index])
-  );
-
-  const getMatcherSubscribers = (matcher) => (
-    (store.matchersMap[matcher] || []).map((index) => store.subscribers[index])
-  );
-
   const getEventSubscribersMatching = (event) => (
     store.matchers
       .filter((matcher) => matcher.test(event))
-      .reduce((acc, matcher) => acc.concat(getMatcherSubscribers(matcher.toString())), [])
-      .concat(getEventSubscribers(event))
+      .reduce((acc, matcher) => acc.concat(store.matchersMap[matcher.toString()] || []), [])
+      .concat(store.eventsMap[event] || [])
   );
 
   const dispatch = (event, params) => {
     event = normalizeEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
     if (typeof event !== 'string') {
-      throw new Error('You can only dispatch string event names!');
+      throw new Error(
+        `You can only dispatch events of type string and array (got ${typeof event} instead).`
+      );
     }
 
     const subscribers = getEventSubscribersMatching(event);
@@ -193,7 +179,10 @@ export default (_options = {}) => {
         params: finalParams,
         next: (nextParams) => cascadeSubscribers(subscribers, nextParams),
         dispatch,
-        lookup
+        lookup,
+        emit,
+        emitBefore,
+        emitAfter
       }, (err, value) => {
         process.nextTick(() => {
           if (is.called) {

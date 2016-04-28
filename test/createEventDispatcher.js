@@ -1,16 +1,37 @@
 import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import createEventDispatcher from '../index';
+import createEventDispatcher from '../src/createEventDispatcher';
 
-describe('eventDispatcher', () => {
+describe('createEventDispatcher', () => {
   let dispatcher;
 
   beforeEach(() => {
     dispatcher = createEventDispatcher();
   });
 
-  it('it returns the result', () => {
+  it('should return undefined when calling unregistered event with no params', () => (
+    dispatcher.dispatch('test').then((result) => {
+      expect(result).to.be.undefined();
+    })
+  ));
+
+  it('should return the parameters when calling unregistered event', () => {
+    const params = { it: 'works' };
+
+    return dispatcher.dispatch('test', params).then((result) => {
+      expect(result).to.deep.equal(params);
+    });
+  });
+
+  it('should throw an error when dispatching an invalid event', () => {
+    expect(dispatcher.dispatch).to.throw();
+    expect(() => dispatcher.dispatch('')).to.throw();
+    expect(() => dispatcher.dispatch(Math.random())).to.throw();
+    expect(() => dispatcher.dispatch(/test/)).to.throw();
+  });
+
+  it('should return the result', () => {
     dispatcher.subscribe('test', () => 'it works');
 
     return dispatcher.dispatch('test').then((result) => {
@@ -18,7 +39,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('it calls the hooks', () => {
+  it('should call the hooks', () => {
     const before = sinon.spy();
     const after = sinon.spy();
 
@@ -32,7 +53,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('plays well with async / await', () => {
+  it('should handle async / await', () => {
     dispatcher.subscribe('test2', () => 'works');
 
     dispatcher.subscribe('test1', async ({ dispatch }) => {
@@ -45,7 +66,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can handle callbacks', () => {
+  it('should call the passed callbacks', () => {
     dispatcher.subscribe('test', (ev, cb) => {
       cb(null, 'it works');
     });
@@ -55,7 +76,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('looks up namespaced function', () => {
+  it('should lookup namespaces', () => {
     dispatcher.subscribe('namespace.test', () => 'it works');
 
     const { test } = dispatcher.lookup('namespace');
@@ -65,7 +86,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can handle errors', () => {
+  it('should handle errors', () => {
     dispatcher.subscribe('test', (ev, cb) => {
       cb(new Error('it doesn\'t work!'), 'it works');
     });
@@ -81,7 +102,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('will send the parameters', () => {
+  it('should send the parameters', () => {
     dispatcher.subscribe('test', ({ params }) => params);
 
     return dispatcher.dispatch('test', { hello: 'world' }).then((result) => {
@@ -89,7 +110,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can validate the parameters', () => {
+  it('should validate the passed in parameters', () => {
     dispatcher.subscribe('test', ({ params }) => params, {
       schema: Joi.object({
         foo: Joi.any().valid('foo')
@@ -106,7 +127,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can have default parameters', () => {
+  it('should take into consideration the default parameters', () => {
     dispatcher.subscribe('test', ({ params }) => params, {
       defaultParams: {
         foo: 'bar'
@@ -120,7 +141,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can subscribe using regular expressions', () => {
+  it('should be able to subscribe using regular expressions', () => {
     dispatcher.subscribe(/^te/, ({ next, params }) => next(`${params} works`));
 
     dispatcher.subscribe(/st$/, ({ next }) => next('it'));
@@ -130,7 +151,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can subscribe using regular expressions with higher precendence than plain strings', () => {
+  it('should handle regular expressions with higher precedence than strings', () => {
     dispatcher.subscribe(/^test$/, ({ params, next }) => next(`${params || ''} first`));
     dispatcher.subscribe('test', ({ params, next }) => next(`${params || ''} second`));
 
@@ -139,7 +160,7 @@ describe('eventDispatcher', () => {
     });
   });
 
-  it('can subscribe to a map of handlers', () => {
+  it('should subscribe to a map of handlers', () => {
     const namespace = 'some.random.namespace';
 
     dispatcher.subscribeMap(`${namespace}.Something`, {
