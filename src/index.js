@@ -1,2 +1,1 @@
-import createEventDispatcher from './createEventDispatcher';
-export default createEventDispatcher;
+export createEventDispatcher from './createEventDispatcher';
