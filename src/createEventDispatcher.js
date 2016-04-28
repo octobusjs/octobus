@@ -4,7 +4,7 @@ import EventEmitter from 'events';
 
 const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
 
-const normalizeEvent = (event, delimiter) => {
+const validateEvent = (event, delimiter) => {
   Joi.assert(event, [
     Joi.string().invalid(RESTRICTED_EVENTS),
     Joi.array().min(1).items(Joi.string()),
@@ -12,7 +12,7 @@ const normalizeEvent = (event, delimiter) => {
   ]);
 
   if (Array.isArray(event)) {
-    return event.map((ev) => normalizeEvent(ev, delimiter)).join(delimiter);
+    return event.map((ev) => validateEvent(ev, delimiter)).join(delimiter);
   }
 
   if (typeof event === 'string') {
@@ -71,7 +71,7 @@ export default (_options = {}) => {
       `);
     }
 
-    event = normalizeEvent(event, delimiter); // eslint-disable-line no-param-reassign
+    event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
     const subscriber = { handler, config };
 
     if (event instanceof RegExp) {
@@ -137,7 +137,7 @@ export default (_options = {}) => {
   );
 
   const dispatch = (event, params) => {
-    event = normalizeEvent(event, delimiter); // eslint-disable-line no-param-reassign
+    event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
     if (typeof event !== 'string') {
       throw new Error(
