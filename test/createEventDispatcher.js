@@ -25,8 +25,8 @@ describe('createEventDispatcher', () => {
   });
 
   it('should throw an error when dispatching an invalid event', () => {
-    expect(dispatcher.dispatch).to.throw();
-    expect(() => dispatcher.dispatch('')).to.throw();
+    expect(dispatcher.dispatch).to.throw(/you can only dispatch events of type string/i);
+    expect(() => dispatcher.dispatch('')).to.throw(/not allowed to be empty/);
     expect(() => dispatcher.dispatch(Math.random())).to.throw();
     expect(() => dispatcher.dispatch(/test/)).to.throw();
   });
@@ -47,9 +47,9 @@ describe('createEventDispatcher', () => {
     dispatcher.onAfter('test', after);
 
     const promise = dispatcher.dispatch('test');
-    expect(before.called).to.be.true();
+    expect(before).to.have.been.calledOnce();
     return promise.then(() => {
-      expect(after.called).to.be.true();
+      expect(after).to.have.been.calledOnce();
     });
   });
 
