@@ -154,9 +154,13 @@ export default (_options = {}) => {
       emitAfter(event, result, { dispatch, lookup });
 
       return done ? done(null, result) : result;
-    }, (err) => (
-      done ? done(err) : err
-    ));
+    }, (err) => {
+      if (done) {
+        done(err);
+      } else {
+        throw err;
+      }
+    });
   };
 
   const cascadeSubscribers = (subscribers, params) => {

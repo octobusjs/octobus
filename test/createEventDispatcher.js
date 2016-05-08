@@ -66,6 +66,19 @@ describe('createEventDispatcher', () => {
     });
   });
 
+  it('should handle async / await errors', () => {
+    dispatcher.subscribe('test', () => {
+      throw new Error('not working');
+    });
+
+    dispatcher.subscribe('test', ({ next }) => next());
+
+    return dispatcher.dispatch('test').catch((err) => {
+      expect(err).to.exist();
+      expect(err.message).to.equal('not working');
+    });
+  });
+
   it('should call the passed callbacks', () => {
     dispatcher.subscribe('test', (ev, cb) => {
       cb(null, 'it works');
