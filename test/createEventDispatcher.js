@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import createEventDispatcher from '../src/createEventDispatcher';
+import { createEventDispatcher } from '../src';
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -95,8 +95,7 @@ describe('createEventDispatcher', () => {
       expect(err).to.be.an.instanceof(Error);
     });
 
-    return dispatcher.dispatch('test').then(() => {
-    }, (err) => {
+    return dispatcher.dispatch('test').catch((err) => {
       expect(err).to.be.an.instanceof(Error);
       expect(err.message).to.equal('it doesn\'t work!');
     });
@@ -184,6 +183,30 @@ describe('createEventDispatcher', () => {
         foo: true,
         bar: true
       });
+    });
+  });
+
+  it('dispatch can work with callbacks', (done) => {
+    dispatcher.subscribe('test', () => 'it works');
+
+    dispatcher.dispatch('test', {}, (err, result) => {
+      expect(err).to.be.null();
+      expect(result).to.equal('it works');
+      done();
+    });
+  });
+
+  it('dispatch can handle callback errors', (done) => {
+    dispatcher.subscribe('test', () => {
+      throw new Error('meh');
+    });
+
+    dispatcher.subscribe('test', ({ next }) => next());
+
+    dispatcher.dispatch('test', {}, (err) => {
+      expect(err).to.be.an.instanceof(Error);
+      expect(err.message).to.equal('meh');
+      done();
     });
   });
 });

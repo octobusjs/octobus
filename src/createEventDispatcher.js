@@ -26,7 +26,9 @@ const defaultOptions = {
   delimiter: '.',
 
   createEventEmitter() {
-    return new EventEmitter();
+    const emitter = new EventEmitter();
+    emitter.on('error', () => {});
+    return emitter;
   },
 
   processParams(params, config = {}) {
@@ -136,7 +138,7 @@ export default (_options = {}) => {
       .concat(store.eventsMap[event] || [])
   );
 
-  const dispatch = (event, params) => {
+  const dispatch = (event, params, done) => {
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
     if (typeof event !== 'string') {
@@ -151,8 +153,10 @@ export default (_options = {}) => {
     return cascadeSubscribers(subscribers, params).then((result) => {
       emitAfter(event, result, { dispatch, lookup });
 
-      return result;
-    });
+      return done ? done(null, result) : result;
+    }, (err) => (
+      done ? done(err) : err
+    ));
   };
 
   const cascadeSubscribers = (subscribers, params) => {
