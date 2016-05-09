@@ -67,6 +67,8 @@ describe('createEventDispatcher', () => {
   });
 
   it('should handle async / await errors', () => {
+    dispatcher.subscribe('test', () => 'it works');
+
     dispatcher.subscribe('test', () => {
       throw new Error('not working');
     });
@@ -86,6 +88,17 @@ describe('createEventDispatcher', () => {
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result).to.equal('it works');
+    });
+  });
+
+  it('should call the dispatch callback with the thrown error', () => {
+    dispatcher.subscribe('test', () => {
+      throw new Error('not working');
+    });
+
+    return dispatcher.dispatch('test', {}, (err) => {
+      expect(err).to.exist();
+      expect(err.message).to.equal('not working');
     });
   });
 

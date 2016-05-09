@@ -156,10 +156,10 @@ export default (_options = {}) => {
       return done ? done(null, result) : result;
     }, (err) => {
       if (done) {
-        done(err);
-      } else {
-        throw err;
+        return done(err);
       }
+
+      throw err;
     });
   };
 
