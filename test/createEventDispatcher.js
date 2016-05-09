@@ -10,25 +10,21 @@ describe('createEventDispatcher', () => {
     dispatcher = createEventDispatcher();
   });
 
-  it('should return undefined when calling unregistered event with no params', () => (
-    dispatcher.dispatch('test').then((result) => {
-      expect(result).to.be.undefined();
-    })
-  ));
-
-  it('should return the parameters when calling unregistered event', () => {
-    const params = { it: 'works' };
-
-    return dispatcher.dispatch('test', params).then((result) => {
-      expect(result).to.deep.equal(params);
-    });
-  });
-
   it('should throw an error when dispatching an invalid event', () => {
     expect(dispatcher.dispatch).to.throw(/you can only dispatch events of type string/i);
     expect(() => dispatcher.dispatch('')).to.throw(/not allowed to be empty/);
     expect(() => dispatcher.dispatch(Math.random())).to.throw();
     expect(() => dispatcher.dispatch(/test/)).to.throw();
+  });
+
+  it('should throw an error when calling an unregistered service', () => {
+    const onResolve = sinon.spy();
+    return dispatcher.dispatch('foo.bar').then(onResolve, (err) => {
+      expect(err).to.exist();
+      expect(err.message).to.equal('No subscribers registered for the foo.bar event.');
+    }).then(() => {
+      expect(onResolve).to.not.have.been.called();
+    });
   });
 
   it('should return the result', () => {
@@ -43,6 +39,7 @@ describe('createEventDispatcher', () => {
     const before = sinon.spy();
     const after = sinon.spy();
 
+    dispatcher.subscribe('test', () => 'something');
     dispatcher.onBefore('test', before);
     dispatcher.onAfter('test', after);
 

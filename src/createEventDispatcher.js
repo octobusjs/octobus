@@ -149,6 +149,10 @@ export default (_options = {}) => {
 
     const subscribers = getEventSubscribersMatching(event);
 
+    if (!subscribers.length) {
+      return Promise.reject(new Error(`No subscribers registered for the ${event} event.`));
+    }
+
     emitBefore(event, params, { dispatch, lookup });
     return cascadeSubscribers(subscribers, params).then((result) => {
       emitAfter(event, result, { dispatch, lookup });
