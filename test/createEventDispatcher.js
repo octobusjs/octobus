@@ -15,6 +15,7 @@ describe('createEventDispatcher', () => {
     expect(() => dispatcher.dispatch('')).to.throw(/not allowed to be empty/);
     expect(() => dispatcher.dispatch(Math.random())).to.throw();
     expect(() => dispatcher.dispatch(/test/)).to.throw();
+    expect(() => dispatcher.dispatch('foo!bar')).to.throw();
   });
 
   it('should throw an error when calling an unregistered service', () => {

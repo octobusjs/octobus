@@ -6,7 +6,7 @@ const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
 
 const validateEvent = (event, delimiter) => {
   Joi.assert(event, [
-    Joi.string().invalid(RESTRICTED_EVENTS),
+    Joi.string().regex(/^([A-Za-z0-9]+\.?)+$/).invalid(RESTRICTED_EVENTS),
     Joi.array().min(1).items(Joi.string()),
     Joi.object().type(RegExp)
   ]);
