@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { set, get } from 'lodash';
 import Joi from 'joi';
 import EventEmitter from 'events';
 
@@ -88,7 +88,7 @@ export default (_options = {}) => {
     } else if (typeof event === 'string') {
       if (!Array.isArray(store.eventsMap[event])) {
         store.eventsMap[event] = [];
-        _.set(store.eventsTree, event, store.eventsMap[event]);
+        set(store.eventsTree, event, store.eventsMap[event]);
       }
 
       store.eventsMap[event].unshift(subscriber);
@@ -223,7 +223,7 @@ export default (_options = {}) => {
   };
 
   const lookup = (path) => {
-    const methods = _.get(store.eventsTree, path, {});
+    const methods = get(store.eventsTree, path, {});
 
     return Object.keys(methods).reduce((acc, methodName) => (
       Object.assign(acc, {
