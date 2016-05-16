@@ -136,8 +136,8 @@ describe('createEventDispatcher', () => {
   it('should validate the passed in parameters', () => {
     dispatcher.subscribe('test', ({ params }) => params, {
       schema: Joi.object({
-        foo: Joi.any().valid('foo')
-      }).required()
+        foo: Joi.any().valid('foo'),
+      }).required(),
     });
 
     dispatcher.on('error', (err) => {
@@ -153,13 +153,13 @@ describe('createEventDispatcher', () => {
   it('should take into consideration the default parameters', () => {
     dispatcher.subscribe('test', ({ params }) => params, {
       defaultParams: {
-        foo: 'bar'
-      }
+        foo: 'bar',
+      },
     });
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result).to.deep.equal({
-        foo: 'bar'
+        foo: 'bar',
       });
     });
   });
@@ -209,15 +209,15 @@ describe('createEventDispatcher', () => {
     dispatcher.subscribeMap(`${namespace}.Something`, {
       foo({ dispatch, params = {} }) {
         return dispatch(`${namespace}.Something.bar`, Object.assign({}, params, {
-          foo: true
+          foo: true,
         }));
       },
 
       bar({ params = {} }) {
         return Object.assign({}, params, {
-          bar: true
+          bar: true,
         });
-      }
+      },
     });
 
     const Something = dispatcher.lookup(`${namespace}.Something`);
@@ -225,7 +225,7 @@ describe('createEventDispatcher', () => {
     return Something.foo().then((result) => {
       expect(result).to.deep.equal({
         foo: true,
-        bar: true
+        bar: true,
       });
     });
   });
@@ -282,7 +282,7 @@ describe('createEventDispatcher', () => {
     const unsubscribe = dispatcher.subscribeMap('Something', {
       foo() {
         return 'it works';
-      }
+      },
     });
 
     const Something = dispatcher.lookup('Something');
