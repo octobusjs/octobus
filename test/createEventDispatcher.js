@@ -210,6 +210,42 @@ describe('createEventDispatcher', () => {
     });
   });
 
+  it('should unsubscribe all handlers for a specific event', () => {
+    const subscriber = sinon.stub();
+    subscriber.onCall(0).returns(true);
+
+    dispatcher.subscribe('test', subscriber);
+    dispatcher.subscribe('test', ({ next }) => next());
+
+    dispatcher.unsubscribe('test');
+
+    return dispatcher.dispatch('test').then(() => {
+      expect(subscriber).to.not.have.been.called();
+    }, (err) => {
+      expect(err).to.exist();
+      expect(err.message).to.match(/No subscribers registered/);
+    });
+  });
+
+  it('should unsubscribe only one handlers for a specific event', () => {
+    const subscriber1 = sinon.stub();
+    const subscriber2 = sinon.stub();
+    subscriber1.onCall(0).returns(true);
+    subscriber2.onCall(0).returns(true);
+
+    dispatcher.subscribe('test', subscriber1);
+    dispatcher.subscribe('test', ({ next }) => next(subscriber2()));
+
+    dispatcher.unsubscribe('test', subscriber1);
+
+    return dispatcher.dispatch('test').then(() => {
+      expect(subscriber1).to.not.have.been.called();
+      expect(subscriber2).to.have.been.called();
+    }, (err) => {
+      expect(err).not.to.exist();
+    });
+  });
+
   it('dispatch can work with callbacks', (done) => {
     dispatcher.subscribe('test', () => 'it works');
 
@@ -231,6 +267,18 @@ describe('createEventDispatcher', () => {
       expect(err).to.be.an.instanceof(Error);
       expect(err.message).to.equal('meh');
       done();
+    });
+  });
+
+  xit('should handle multiple regular expressions quite fast', () => {
+    dispatcher.subscribe('test', () => 'it works');
+    for (let i = 0; i < 1000; i++) {
+      dispatcher.subscribe(/test/, ({ next }) => next());
+      dispatcher.subscribe('test', ({ next }) => next());
+    }
+
+    dispatcher.dispatch('test').then((result) => {
+      expect(result).to.equal('it works');
     });
   });
 });

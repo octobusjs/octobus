@@ -1,4 +1,4 @@
-import { set, get } from 'lodash';
+import { set, get, has } from 'lodash';
 import Joi from 'joi';
 import EventEmitter from 'events';
 
@@ -52,10 +52,9 @@ export default (_options = {}) => {
   const { delimiter, processParams, createEventEmitter } = options;
 
   const store = {
-    eventsMap: {},
+    eventsMap: new Map(),
     eventsTree: {},
-    matchers: [],
-    matchersMap: {}
+    matchers: []
   };
 
   const emitter = createEventEmitter();
@@ -77,22 +76,21 @@ export default (_options = {}) => {
     const subscriber = { handler, config };
 
     if (event instanceof RegExp) {
-      const matcher = event.toString();
-      store.matchers.unshift(event);
-
-      if (!Array.isArray(store.matchersMap[matcher])) {
-        store.matchersMap[matcher] = [];
+      const isFound = store.matchers.find((matcher) => matcher.toString() === event.toString());
+      if (!isFound) {
+        store.matchers.unshift(event);
       }
-
-      store.matchersMap[matcher].unshift(subscriber);
-    } else if (typeof event === 'string') {
-      if (!Array.isArray(store.eventsMap[event])) {
-        store.eventsMap[event] = [];
-        set(store.eventsTree, event, store.eventsMap[event]);
-      }
-
-      store.eventsMap[event].unshift(subscriber);
     }
+
+    if (!store.eventsMap.has(event)) {
+      store.eventsMap.set(event, []);
+
+      if (typeof event === 'string' && !has(store.eventsTree, event)) {
+        set(store.eventsTree, event, store.eventsMap.get(event));
+      }
+    }
+
+    store.eventsMap.get(event).unshift(subscriber);
 
     emit('subscribed', event, subscriber);
   };
@@ -109,33 +107,31 @@ export default (_options = {}) => {
     }, {})
   );
 
-  const removeSubscriberFromMap = (map, event, handler) => {
-    const index = map[event].findIndex((subscriber) => subscriber.handler === handler);
-    if (index > -1) {
-      map[event].splice(index, 1);
-    }
-  };
-
   const unsubscribe = (event, handler = null) => {
+    if (!store.eventsMap.has(event)) {
+      return false;
+    }
+
     if (!handler) {
-      if (typeof event === 'string') {
-        delete store.eventsMap[event];
-      } else {
-        delete store.matchersMap[event];
-      }
+      store.eventsMap.set(event, []);
     } else {
-      const map = typeof event === 'string' ? store.eventsMap : store.matchersMap;
-      removeSubscriberFromMap(map, event, handler);
+      const index = store.eventsMap.get(event).findIndex(
+        (subscriber) => subscriber.handler === handler
+      );
+      if (index > -1) {
+        store.eventsMap.get(event).splice(index, 1);
+      }
     }
 
     emit('unsubscribed', event, handler);
+    return true;
   };
 
   const getEventSubscribersMatching = (event) => (
     store.matchers
       .filter((matcher) => matcher.test(event))
-      .reduce((acc, matcher) => acc.concat(store.matchersMap[matcher.toString()] || []), [])
-      .concat(store.eventsMap[event] || [])
+      .reduce((acc, matcher) => acc.concat(store.eventsMap.get(matcher) || []), [])
+      .concat(store.eventsMap.get(event) || [])
   );
 
   const dispatch = (event, params, done) => {
