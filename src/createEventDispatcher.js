@@ -1,4 +1,4 @@
-import { set, get, has } from 'lodash';
+import { set, get } from 'lodash';
 import Joi from 'joi';
 import EventEmitter from 'events';
 
@@ -89,6 +89,8 @@ export default (_options = {}) => {
     }
 
     emit('subscribed', event, subscriber);
+
+    return () => unsubscribe(event, handler);
   };
 
   const subscribeMap = (prefix, map) => (

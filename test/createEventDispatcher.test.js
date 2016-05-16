@@ -174,6 +174,14 @@ describe('createEventDispatcher', () => {
     });
   });
 
+  it('should be able to subscribe using an array event', () => {
+    dispatcher.subscribe(['this', 'is', 'an', 'array'], () => 'it works');
+
+    return dispatcher.dispatch('this.is.an.array').then((result) => {
+      expect(result).to.equal('it works');
+    });
+  });
+
   it('should respect the order of regular expressions based susbcribers', () => {
     dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 3`));
     dispatcher.subscribe(/^test$/, ({ next, params }) => next(`${params} 2`));
@@ -220,17 +228,29 @@ describe('createEventDispatcher', () => {
     });
   });
 
-  it('should unsubscribe all handlers for a specific event', () => {
-    const subscriber = sinon.stub();
-    subscriber.onCall(0).returns(true);
+  it('should throw an error when subscribing with invalid handler', () => {
+    const fn = () => {
+      dispatcher.subscribe('test', 'not a function');
+    };
 
-    dispatcher.subscribe('test', subscriber);
-    dispatcher.subscribe('test', ({ next }) => next());
+    expect(fn).to.throw(/has to be a function/);
+  });
+
+  it('should unsubscribe all handlers for a specific event', () => {
+    const subscriber1 = sinon.stub();
+    const subscriber2 = sinon.stub();
+    subscriber1.onCall(0).returns(true);
+    subscriber2.onCall(0).returns(true);
+
+    dispatcher.subscribe('test', subscriber1);
+    const unsubscriber2 = dispatcher.subscribe(/test/, subscriber2);
 
     dispatcher.unsubscribe('test');
+    unsubscriber2();
 
     return dispatcher.dispatch('test').then(() => {
-      expect(subscriber).to.not.have.been.called();
+      expect(subscriber1).to.not.have.been.called();
+      expect(subscriber2).to.not.have.been.called();
     }, (err) => {
       expect(err).to.exist();
       expect(err.message).to.match(/No subscribers registered/);
@@ -253,6 +273,26 @@ describe('createEventDispatcher', () => {
       expect(subscriber2).to.have.been.called();
     }, (err) => {
       expect(err).not.to.exist();
+    });
+  });
+
+  it('should be able to unsubscribe using the object returned by subscribeMap', () => {
+    const unsubscribe = dispatcher.subscribeMap('Something', {
+      foo() {
+        return 'it works';
+      }
+    });
+
+    const Something = dispatcher.lookup('Something');
+
+    return Something.foo().then((result) => {
+      expect(result).to.equal('it works');
+      unsubscribe.foo();
+
+      return Something.foo().catch((err) => {
+        expect(err).to.exist();
+        expect(err.message).to.match(/No subscribers registered/);
+      });
     });
   });
 
