@@ -185,10 +185,12 @@ describe('createEventDispatcher', () => {
   it('should respect the order of regular expressions based susbcribers', () => {
     dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 3`));
     dispatcher.subscribe(/^test$/, ({ next, params }) => next(`${params} 2`));
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`));
     dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 1`));
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`));
 
     return dispatcher.dispatch('test', 0).then((result) => {
-      expect(result.trim()).to.equal('0 1 2 3');
+      expect(result.trim()).to.equal('0 1 2 3 4 5');
     });
   });
 
