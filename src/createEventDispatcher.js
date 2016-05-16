@@ -167,15 +167,7 @@ export default (_options = {}) => {
     });
   };
 
-  const cascadeSubscribers = (subscribers, params) => {
-    if (!subscribers.length) {
-      return Promise.resolve(params);
-    }
-
-    const { handler, config } = subscribers.shift();
-    const is = {
-      called: false
-    };
+  const runHandler = (handler, params, config, next) => {
     let resolve;
     let reject;
 
@@ -185,11 +177,9 @@ export default (_options = {}) => {
     });
 
     try {
-      const finalParams = processParams(params, config);
-
       const result = handler({
-        params: finalParams,
-        next: (nextParams) => cascadeSubscribers(subscribers, nextParams),
+        params: processParams(params, config),
+        next,
         dispatch,
         lookup,
         emit,
@@ -197,10 +187,6 @@ export default (_options = {}) => {
         emitAfter
       }, (err, value) => {
         process.nextTick(() => {
-          if (is.called) {
-            throw new Error('Already called!');
-          }
-
           if (err) {
             emitter.emit('error', err);
             reject(err);
@@ -211,7 +197,6 @@ export default (_options = {}) => {
       });
 
       if (typeof result !== 'undefined') {
-        is.called = true;
         resolve(result);
       }
     } catch (err) {
@@ -220,6 +205,18 @@ export default (_options = {}) => {
     }
 
     return promise;
+  };
+
+  const cascadeSubscribers = (subscribers, params) => {
+    if (!subscribers.length) {
+      return Promise.resolve(params);
+    }
+
+    const { handler, config } = subscribers.shift();
+
+    const next = (nextParams) => cascadeSubscribers(subscribers, nextParams);
+
+    return runHandler(handler, params, config, next);
   };
 
   const lookup = (path) => {
