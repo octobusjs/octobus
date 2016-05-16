@@ -8,7 +8,7 @@ const validateEvent = (event, delimiter) => {
   Joi.assert(event, [
     Joi.string().regex(/^([A-Za-z0-9]+\.?)+$/).invalid(RESTRICTED_EVENTS),
     Joi.array().min(1).items(Joi.string()),
-    Joi.object().type(RegExp)
+    Joi.object().type(RegExp),
   ]);
 
   if (Array.isArray(event)) {
@@ -44,7 +44,7 @@ const defaultOptions = {
     }
 
     return finalParams;
-  }
+  },
 };
 
 export default (_options = {}) => {
@@ -54,7 +54,7 @@ export default (_options = {}) => {
   const store = {
     eventsMap: new Map(),
     matchersMap: new Map(),
-    eventsTree: {}
+    eventsTree: {},
   };
 
   const emitter = createEventEmitter();
@@ -100,7 +100,7 @@ export default (_options = {}) => {
       subscribe(event, handler);
 
       return Object.assign(acc, {
-        [method]: () => unsubscribe(event, handler)
+        [method]: () => unsubscribe(event, handler),
       });
     }, {})
   );
@@ -188,7 +188,7 @@ export default (_options = {}) => {
         lookup,
         emit,
         emitBefore,
-        emitAfter
+        emitAfter,
       }, (err, value) => {
         process.nextTick(() => {
           if (err) {
@@ -228,13 +228,13 @@ export default (_options = {}) => {
 
     return Object.keys(methods).reduce((acc, methodName) => (
       Object.assign(acc, {
-        [methodName]: (params) => dispatch(`${path}${delimiter}${methodName}`, params)
+        [methodName]: (params) => dispatch(`${path}${delimiter}${methodName}`, params),
       })
     ), {});
   };
 
   return {
     emit, emitBefore, emitAfter, on, onBefore, onAfter,
-    dispatch, subscribe, unsubscribe, subscribeMap, lookup
+    dispatch, subscribe, unsubscribe, subscribeMap, lookup,
   };
 };
