@@ -53,8 +53,8 @@ export default (_options = {}) => {
 
   const store = {
     eventsMap: new Map(),
-    eventsTree: {},
-    matchers: []
+    matchersMap: new Map(),
+    eventsTree: {}
   };
 
   const emitter = createEventEmitter();
@@ -76,21 +76,17 @@ export default (_options = {}) => {
     const subscriber = { handler, config };
 
     if (event instanceof RegExp) {
-      const isFound = store.matchers.find((matcher) => matcher.toString() === event.toString());
-      if (!isFound) {
-        store.matchers.unshift(event);
-      }
+      store.matchersMap.set(event, subscriber);
     }
 
-    if (!store.eventsMap.has(event)) {
-      store.eventsMap.set(event, []);
-
-      if (typeof event === 'string' && !has(store.eventsTree, event)) {
+    if (typeof event === 'string') {
+      if (!store.eventsMap.has(event)) {
+        store.eventsMap.set(event, []);
         set(store.eventsTree, event, store.eventsMap.get(event));
       }
-    }
 
-    store.eventsMap.get(event).unshift(subscriber);
+      store.eventsMap.get(event).unshift(subscriber);
+    }
 
     emit('subscribed', event, subscriber);
   };
@@ -108,31 +104,41 @@ export default (_options = {}) => {
   );
 
   const unsubscribe = (event, handler = null) => {
-    if (!store.eventsMap.has(event)) {
-      return false;
+    if (store.matchersMap.has(event)) {
+      store.matchersMap.delete(event);
     }
 
-    if (!handler) {
-      store.eventsMap.set(event, []);
-    } else {
-      const index = store.eventsMap.get(event).findIndex(
-        (subscriber) => subscriber.handler === handler
-      );
-      if (index > -1) {
-        store.eventsMap.get(event).splice(index, 1);
+    if (store.eventsMap.has(event)) {
+      if (!handler) {
+        store.eventsMap.delete(event);
+      } else {
+        const index = store.eventsMap.get(event).findIndex(
+          (subscriber) => subscriber.handler === handler
+        );
+        if (index > -1) {
+          store.eventsMap.get(event).splice(index, 1);
+        }
       }
     }
 
     emit('unsubscribed', event, handler);
-    return true;
   };
 
-  const getEventSubscribersMatching = (event) => (
-    store.matchers
-      .filter((matcher) => matcher.test(event))
-      .reduce((acc, matcher) => acc.concat(store.eventsMap.get(matcher) || []), [])
-      .concat(store.eventsMap.get(event) || [])
-  );
+  const getEventSubscribersMatching = (event) => {
+    let subscribers = [];
+
+    store.matchersMap.forEach((subscriber, matcher) => {
+      if (matcher.test(event)) {
+        subscribers.unshift(subscriber);
+      }
+    });
+
+    if (store.eventsMap.has(event)) {
+      subscribers = subscribers.concat(store.eventsMap.get(event));
+    }
+
+    return subscribers;
+  };
 
   const dispatch = (event, params, done) => {
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign

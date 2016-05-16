@@ -33,9 +33,9 @@
   },
   "homepage": "https://github.com/viczam/octobus#readme",
   "dependencies": {
+    "babel-runtime": "^6.6.1",
     "joi": "^8.0.5",
-    "lodash": "^4.11.1",
-    "babel-runtime": "^6.6.1"
+    "lodash": "^4.11.1"
   },
   "devDependencies": {
     "babel-cli": "^6.6.5",

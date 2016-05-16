@@ -174,6 +174,16 @@ describe('createEventDispatcher', () => {
     });
   });
 
+  it('should respect the order of regular expressions based susbcribers', () => {
+    dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 3`));
+    dispatcher.subscribe(/^test$/, ({ next, params }) => next(`${params} 2`));
+    dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 1`));
+
+    return dispatcher.dispatch('test', 0).then((result) => {
+      expect(result.trim()).to.equal('0 1 2 3');
+    });
+  });
+
   it('should handle regular expressions with higher precedence than strings', () => {
     dispatcher.subscribe(/^test$/, ({ params, next }) => next(`${params || ''} first`));
     dispatcher.subscribe('test', ({ params, next }) => next(`${params || ''} second`));
