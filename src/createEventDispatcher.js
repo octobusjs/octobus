@@ -3,16 +3,17 @@ import Joi from 'joi';
 import EventEmitter from 'events';
 
 const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
+const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
 
 const validateEvent = (event, delimiter) => {
   Joi.assert(event, [
-    Joi.string().regex(/^([A-Za-z0-9]+\.?)+$/).invalid(RESTRICTED_EVENTS),
-    Joi.array().min(1).items(Joi.string()),
+    Joi.string().regex(validEventPattern).invalid(RESTRICTED_EVENTS),
+    Joi.array().min(1).items(Joi.string().regex(validEventPattern)),
     Joi.object().type(RegExp),
   ]);
 
   if (Array.isArray(event)) {
-    return event.map((ev) => validateEvent(ev, delimiter)).join(delimiter);
+    return validateEvent(event.join(delimiter));
   }
 
   if (typeof event === 'string') {
@@ -55,6 +56,7 @@ export default (_options = {}) => {
     eventsMap: new Map(),
     matchersMap: new Map(),
     eventsTree: {},
+    proxies: {},
   };
 
   const emitter = createEventEmitter();
@@ -126,22 +128,6 @@ export default (_options = {}) => {
     emit('unsubscribed', event, handler);
   };
 
-  const getEventSubscribersMatching = (event) => {
-    let subscribers = [];
-
-    store.matchersMap.forEach((subscriber, matcher) => {
-      if (matcher.test(event)) {
-        subscribers.unshift(subscriber);
-      }
-    });
-
-    if (store.eventsMap.has(event)) {
-      subscribers = subscribers.concat(store.eventsMap.get(event));
-    }
-
-    return subscribers;
-  };
-
   const dispatch = (event, params, done) => {
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
@@ -151,7 +137,15 @@ export default (_options = {}) => {
       );
     }
 
-    const subscribers = getEventSubscribersMatching(event);
+    let subscribers;
+
+    if (store.proxies[event]) {
+      const { targetEvent, paramsTransformer } = store.proxies[event];
+      subscribers = getEventSubscribersMatching(targetEvent);
+      params = paramsTransformer(params); // eslint-disable-line no-param-reassign
+    } else {
+      subscribers = getEventSubscribersMatching(event);
+    }
 
     if (!subscribers.length) {
       return Promise.reject(new Error(`No subscribers registered for the ${event} event.`));
@@ -169,6 +163,20 @@ export default (_options = {}) => {
 
       throw err;
     });
+  };
+
+  const proxy = (sourceEvent, targetEvent, paramsTransformer = (i) => i) => {
+    store.proxies[sourceEvent] = { targetEvent, paramsTransformer };
+  };
+
+  const lookup = (path) => {
+    const methods = get(store.eventsTree, path, {});
+
+    return Object.keys(methods).reduce((acc, methodName) => (
+      Object.assign(acc, {
+        [methodName]: (params) => dispatch(`${path}${delimiter}${methodName}`, params),
+      })
+    ), {});
   };
 
   const runHandler = (handler, params, config, next) => {
@@ -211,6 +219,22 @@ export default (_options = {}) => {
     return promise;
   };
 
+  const getEventSubscribersMatching = (event) => {
+    let subscribers = [];
+
+    store.matchersMap.forEach((subscriber, matcher) => {
+      if (matcher.test(event)) {
+        subscribers.unshift(subscriber);
+      }
+    });
+
+    if (store.eventsMap.has(event)) {
+      subscribers = subscribers.concat(store.eventsMap.get(event));
+    }
+
+    return subscribers;
+  };
+
   const cascadeSubscribers = (subscribers, params) => {
     if (!subscribers.length) {
       return Promise.resolve(params);
@@ -223,18 +247,8 @@ export default (_options = {}) => {
     return runHandler(handler, params, config, next);
   };
 
-  const lookup = (path) => {
-    const methods = get(store.eventsTree, path, {});
-
-    return Object.keys(methods).reduce((acc, methodName) => (
-      Object.assign(acc, {
-        [methodName]: (params) => dispatch(`${path}${delimiter}${methodName}`, params),
-      })
-    ), {});
-  };
-
   return {
     emit, emitBefore, emitAfter, on, onBefore, onAfter,
-    dispatch, subscribe, unsubscribe, subscribeMap, lookup,
+    dispatch, subscribe, unsubscribe, subscribeMap, lookup, proxy,
   };
 };
