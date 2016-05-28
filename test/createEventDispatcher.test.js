@@ -100,6 +100,22 @@ describe('createEventDispatcher', () => {
     });
   });
 
+  it('should be able to return a valid result using reply', () => {
+    dispatcher.subscribe('test', ({ reply }) => reply('it works'));
+
+    return dispatcher.dispatch('test').then((result) => {
+      expect(result).to.equal('it works');
+    });
+  });
+
+  it('should be able to return an error using reply', () => {
+    dispatcher.subscribe('test', ({ reply }) => reply(new Error('nope, doesn\'t work!')));
+
+    return dispatcher.dispatch('test').catch((err) => {
+      expect(err.message).to.equal('nope, doesn\'t work!');
+    });
+  });
+
   it('should lookup namespaces', () => {
     dispatcher.subscribe('namespace.test', () => 'it works');
 

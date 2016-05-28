@@ -188,32 +188,39 @@ export default (_options = {}) => {
       reject = _reject;
     });
 
+    const handleResult = (err, result) => {
+      if (err) {
+        emitter.emit('error', err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    };
+
+    const reply = (value) => {
+      const err = value instanceof Error ? value : null;
+      handleResult(err, value);
+    };
+
     try {
+      params = processParams(params, config); // eslint-disable-line no-param-reassign
+
       const result = handler({
-        params: processParams(params, config),
+        params,
         next,
         dispatch,
         lookup,
         emit,
         emitBefore,
         emitAfter,
-      }, (err, value) => {
-        process.nextTick(() => {
-          if (err) {
-            emitter.emit('error', err);
-            reject(err);
-          } else {
-            resolve(value);
-          }
-        });
-      });
+        reply,
+      }, handleResult);
 
-      if (typeof result !== 'undefined') {
-        resolve(result);
+      if (result !== undefined) {
+        handleResult(null, result);
       }
     } catch (err) {
-      emitter.emit('error', err);
-      reject(err);
+      handleResult(err);
     }
 
     return promise;
