@@ -5,6 +5,20 @@ import EventEmitter from 'events';
 const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
 const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
 
+const createOneTimeCallable = (fn, errorMessage = 'can be called only once') => {
+  let called = false;
+  return (...args) => {
+    if (called) {
+      throw new Error(errorMessage);
+    }
+
+    const result = fn(...args);
+    called = true;
+
+    return result;
+  };
+};
+
 const validateEvent = (event, delimiter) => {
   Joi.assert(event, [
     Joi.string().regex(validEventPattern).invalid(RESTRICTED_EVENTS),
@@ -188,14 +202,14 @@ export default (_options = {}) => {
       reject = _reject;
     });
 
-    const handleResult = (err, result) => {
+    const handleResult = createOneTimeCallable((err, result) => {
       if (err) {
         emitter.emit('error', err);
         reject(err);
       } else {
         resolve(result);
       }
-    };
+    }, 'The result was already handled!');
 
     const reply = (value) => {
       const err = value instanceof Error ? value : null;

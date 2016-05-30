@@ -10,6 +10,29 @@ describe('createEventDispatcher', () => {
     dispatcher = createEventDispatcher();
   });
 
+  describe('handling results', () => {
+    describe('should throw an error when handling a result twice', () => {
+      it('when returning a value and calling the callback', () => {
+        dispatcher.subscribe('test', ({}, cb) => cb(null, 'it works') || true);
+        expect(() => dispatcher.dispatch('test')).to.throw(/already handled/);
+      });
+
+      it('when returning a value and calling reply', () => {
+        dispatcher.subscribe('test', ({ reply }) => reply('it works') || true);
+        expect(() => dispatcher.dispatch('test')).to.throw(/already handled/);
+      });
+
+      it('when calling reply and the callback', () => {
+        dispatcher.subscribe('test', ({ reply }, cb) => {
+          reply('it works');
+          cb(null, 'it works');
+        });
+
+        expect(() => dispatcher.dispatch('test')).to.throw(/already handled/);
+      });
+    });
+  });
+
   it('should throw an error when dispatching an invalid event', () => {
     expect(dispatcher.dispatch).to.throw(/you can only dispatch events of type string/i);
     expect(() => dispatcher.dispatch('')).to.throw(/not allowed to be empty/);
