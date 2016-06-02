@@ -1,41 +1,7 @@
 import { set, get } from 'lodash';
 import Joi from 'joi';
 import EventEmitter from 'events';
-
-const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
-const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
-
-const createOneTimeCallable = (fn, errorMessage = 'can be called only once') => {
-  let called = false;
-  return (...args) => {
-    if (called) {
-      throw new Error(errorMessage);
-    }
-
-    const result = fn(...args);
-    called = true;
-
-    return result;
-  };
-};
-
-const validateEvent = (event, delimiter) => {
-  Joi.assert(event, [
-    Joi.string().regex(validEventPattern).invalid(RESTRICTED_EVENTS),
-    Joi.array().min(1).items(Joi.string().regex(validEventPattern)),
-    Joi.object().type(RegExp),
-  ]);
-
-  if (Array.isArray(event)) {
-    return validateEvent(event.join(delimiter));
-  }
-
-  if (typeof event === 'string') {
-    return event.trim();
-  }
-
-  return event;
-};
+import { createOneTimeCallable, validateEvent } from './utils';
 
 const defaultOptions = {
   delimiter: '.',
