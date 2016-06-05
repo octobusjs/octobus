@@ -1,9 +1,10 @@
 import Joi from 'joi';
 
-const RESTRICTED_EVENTS = ['error', 'subscribe', 'unsubscribe'];
+const restrictedEvents = ['error', 'subscribe', 'unsubscribe'];
 const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
+const callableErrorMessage = 'Callback already called!';
 
-export const createOneTimeCallable = (fn, errorMessage = 'can be called only once') => {
+export const createOneTimeCallable = (fn, errorMessage = callableErrorMessage) => {
   let called = false;
   return (...args) => {
     if (called) {
@@ -17,7 +18,7 @@ export const createOneTimeCallable = (fn, errorMessage = 'can be called only onc
 
 export const validateEvent = (event, delimiter) => {
   Joi.assert(event, [
-    Joi.string().regex(validEventPattern).invalid(RESTRICTED_EVENTS),
+    Joi.string().regex(validEventPattern).invalid(restrictedEvents),
     Joi.array().min(1).items(Joi.string().regex(validEventPattern)),
     Joi.object().type(RegExp),
   ]);
