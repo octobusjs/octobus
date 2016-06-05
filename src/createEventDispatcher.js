@@ -3,6 +3,8 @@ import Joi from 'joi';
 import EventEmitter from 'events';
 import { createOneTimeCallable, validateEvent } from './utils';
 
+const callableErrorMessage = 'The result was already handled!';
+
 const defaultOptions = {
   delimiter: '.',
 
@@ -175,7 +177,7 @@ export default (_options = {}) => {
       } else {
         resolve(result);
       }
-    }, 'The result was already handled!');
+    }, callableErrorMessage);
 
     const reply = (value) => {
       const err = value instanceof Error ? value : null;
