@@ -31,8 +31,11 @@ const defaultOptions = {
 };
 
 export default (_options = {}) => {
-  const options = Object.assign({}, defaultOptions, _options);
-  const { delimiter, processParams, createEventEmitter } = options;
+  const {
+    delimiter,
+    processParams,
+    createEventEmitter,
+  } = Object.assign({}, defaultOptions, _options);
 
   const store = {
     eventsMap: new Map(),
@@ -110,8 +113,13 @@ export default (_options = {}) => {
     emit('unsubscribed', event, handler);
   };
 
-  const dispatch = (event, params, done) => {
+  const dispatch = (event, params, options = {}, done) => {
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
+
+    if (!done && typeof options === 'function') {
+      done = options; // eslint-disable-line no-param-reassign
+      options = {}; // eslint-disable-line no-param-reassign
+    }
 
     if (typeof event !== 'string') {
       throw new Error(
@@ -133,9 +141,9 @@ export default (_options = {}) => {
       return Promise.reject(new Error(`No subscribers registered for the ${event} event.`));
     }
 
-    emitBefore(event, params, { dispatch, lookup });
-    return cascadeSubscribers(subscribers, params).then((result) => {
-      emitAfter(event, result, { dispatch, lookup });
+    emitBefore(event, params, { dispatch, lookup, options });
+    return cascadeSubscribers(subscribers, params, options).then((result) => {
+      emitAfter(event, result, { dispatch, lookup, options });
 
       return done ? done(null, result) : result;
     }, (err) => {
@@ -161,7 +169,7 @@ export default (_options = {}) => {
     ), {});
   };
 
-  const runHandler = (handler, params, config, next) => {
+  const runHandler = (handler, params, options, config, next) => {
     let resolve;
     let reject;
 
@@ -189,6 +197,7 @@ export default (_options = {}) => {
 
       const result = handler({
         params,
+        options,
         next,
         dispatch,
         lookup,
@@ -224,16 +233,16 @@ export default (_options = {}) => {
     return subscribers;
   };
 
-  const cascadeSubscribers = (subscribers, params) => {
+  const cascadeSubscribers = (subscribers, params, options) => {
     if (!subscribers.length) {
       return Promise.resolve(params);
     }
 
     const { handler, config } = subscribers.shift();
 
-    const next = (nextParams) => cascadeSubscribers(subscribers, nextParams);
+    const next = (nParams, nOptions) => cascadeSubscribers(subscribers, nParams, nOptions);
 
-    return runHandler(handler, params, config, next);
+    return runHandler(handler, params, options, config, next);
   };
 
   return {
