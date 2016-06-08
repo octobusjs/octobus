@@ -63,14 +63,16 @@ describe('createEventDispatcher', () => {
     const before = sinon.spy();
     const after = sinon.spy();
 
-    dispatcher.subscribe('test', () => 'something');
+    dispatcher.subscribe('test', () => 'bar');
     dispatcher.onBefore('test', before);
     dispatcher.onAfter('test', after);
 
-    const promise = dispatcher.dispatch('test');
+    const promise = dispatcher.dispatch('test', 'foo');
     expect(before).to.have.been.calledOnce();
+    expect(before).to.have.been.calledWith('foo');
     return promise.then(() => {
       expect(after).to.have.been.calledOnce();
+      expect(after).to.have.been.calledWith('bar');
     });
   });
 

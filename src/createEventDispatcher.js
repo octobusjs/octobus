@@ -43,7 +43,7 @@ export default (_options = {}) => {
 
   const emitter = createEventEmitter();
   const on = (...args) => emitter.on(...args);
-  const emit = (event, ...args) => emitter.emit(event, ...[args.concat([{ dispatch, lookup }])]);
+  const emit = (event, ...args) => emitter.emit(event, ...args.concat([{ dispatch, lookup }]));
   const onBefore = (event, ...args) => on(`before:${event}`, ...args);
   const onAfter = (event, ...args) => on(`after:${event}`, ...args);
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
