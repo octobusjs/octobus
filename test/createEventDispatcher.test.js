@@ -11,6 +11,16 @@ describe('createEventDispatcher', () => {
   });
 
   describe('handling results', () => {
+    describe('that are valid', () => {
+      it('should return the result', () => {
+        dispatcher.subscribe('test', () => 'it works');
+
+        return dispatcher.dispatch('test').then((result) => {
+          expect(result).to.equal('it works');
+        });
+      });
+    });
+
     describe('should throw an error when handling a result twice', () => {
       it('when returning a value and calling the callback', () => {
         dispatcher.subscribe('test', ({}, cb) => cb(null, 'it works') || true);
@@ -48,14 +58,6 @@ describe('createEventDispatcher', () => {
       expect(err.message).to.equal('No subscribers registered for the foo.bar event.');
     }).then(() => {
       expect(onResolve).to.not.have.been.called();
-    });
-  });
-
-  it('should return the result', () => {
-    dispatcher.subscribe('test', () => 'it works');
-
-    return dispatcher.dispatch('test').then((result) => {
-      expect(result).to.equal('it works');
     });
   });
 
@@ -118,6 +120,8 @@ describe('createEventDispatcher', () => {
     dispatcher.subscribe('test', () => {
       throw new Error('not working');
     });
+
+    dispatcher.subscribe('test', ({ params, next }) => next(params));
 
     return dispatcher.dispatch('test', {}, (err) => {
       expect(err).to.exist();
@@ -229,6 +233,22 @@ describe('createEventDispatcher', () => {
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`));
     dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 1`));
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`));
+
+    return dispatcher.dispatch('test', 0).then((result) => {
+      expect(result.trim()).to.equal('0 1 2 3 4 5');
+    });
+  });
+
+  it('should be handle the subscribers using priorities', () => {
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 3`), { priority: 100 });
+
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`), { priority: -1 });
+
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), { priority: 10 });
+
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 2`), { priority: 1000 });
+
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 1`), { priority: 10000 });
 
     return dispatcher.dispatch('test', 0).then((result) => {
       expect(result.trim()).to.equal('0 1 2 3 4 5');

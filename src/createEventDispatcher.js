@@ -1,4 +1,4 @@
-import { set, get } from 'lodash';
+import { set, get, sortBy } from 'lodash';
 import Joi from 'joi';
 import EventEmitter from 'events';
 import { createOneTimeCallable, validateEvent } from './utils';
@@ -67,6 +67,10 @@ export default (_options = {}) => {
       if (!store.eventsMap.has(event)) {
         store.eventsMap.set(event, []);
         set(store.eventsTree, event, store.eventsMap.get(event));
+      }
+
+      if (!subscriber.config.priority) {
+        subscriber.config.priority = store.eventsMap.get(event).length + 1;
       }
 
       store.eventsMap.get(event).unshift(subscriber);
@@ -218,7 +222,9 @@ export default (_options = {}) => {
     });
 
     if (store.eventsMap.has(event)) {
-      subscribers = subscribers.concat(store.eventsMap.get(event));
+      subscribers = subscribers.concat(
+        sortBy(store.eventsMap.get(event), (s) => -1 * s.config.priority)
+      );
     }
 
     return subscribers;
