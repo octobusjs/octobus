@@ -49,6 +49,20 @@ export default (_options = {}) => {
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
   const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
 
+  const addSubscriberToMap = (map, key, subscriber) => {
+    if (!map.has(key)) {
+      map.set(key, []);
+    }
+
+    const { config } = subscriber;
+
+    if (!config.priority) {
+      config.priority = map.get(key).length + 1;
+    }
+
+    map.get(key).unshift(subscriber);
+  };
+
   const subscribe = (event, handler, config = {}) => {
     if (typeof handler !== 'function') {
       throw new Error(`
@@ -60,20 +74,12 @@ export default (_options = {}) => {
     const subscriber = { handler, config };
 
     if (event instanceof RegExp) {
-      store.matchersMap.set(event, subscriber);
+      addSubscriberToMap(store.matchersMap, event, subscriber);
     }
 
     if (typeof event === 'string') {
-      if (!store.eventsMap.has(event)) {
-        store.eventsMap.set(event, []);
-        set(store.eventsTree, event, store.eventsMap.get(event));
-      }
-
-      if (!subscriber.config.priority) {
-        subscriber.config.priority = store.eventsMap.get(event).length + 1;
-      }
-
-      store.eventsMap.get(event).unshift(subscriber);
+      addSubscriberToMap(store.eventsMap, event, subscriber);
+      set(store.eventsTree, event, store.eventsMap.get(event));
     }
 
     emit('subscribed', event, subscriber);
@@ -215,15 +221,17 @@ export default (_options = {}) => {
   const getEventSubscribersMatching = (event) => {
     let subscribers = [];
 
-    store.matchersMap.forEach((subscriber, matcher) => {
+    store.matchersMap.forEach((matcherSubscribers, matcher) => {
       if (matcher.test(event)) {
-        subscribers.unshift(subscriber);
+        subscribers.unshift(
+          ...sortBy(matcherSubscribers, ({ config: { priority } }) => -1 * priority)
+        );
       }
     });
 
     if (store.eventsMap.has(event)) {
       subscribers = subscribers.concat(
-        sortBy(store.eventsMap.get(event), (s) => -1 * s.config.priority)
+        sortBy(store.eventsMap.get(event), ({ config: { priority } }) => -1 * priority)
       );
     }
 

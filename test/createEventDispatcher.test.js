@@ -210,9 +210,13 @@ describe('createEventDispatcher', () => {
   });
 
   it('should be able to subscribe using regular expressions', () => {
-    dispatcher.subscribe(/^te/, ({ next, params }) => next(`${params} works`));
+    const pattern = /st$/;
 
-    dispatcher.subscribe(/st$/, ({ next }) => next('it'));
+    dispatcher.subscribe(/^te/, () => 'works');
+
+    dispatcher.subscribe(pattern, async ({ next }) => `t ${await next()}`);
+
+    dispatcher.subscribe(pattern, async ({ next }) => `i${await next()}`);
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result).to.equal('it works');
