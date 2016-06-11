@@ -218,7 +218,7 @@ export default (_options = {}) => {
     return promise;
   };
 
-  const getOrderedSubscribers = (subscribers) => (
+  const sortSubscribers = (subscribers) => (
     sortBy(subscribers, ({ config: { priority } }) => -1 * priority)
   );
 
@@ -227,12 +227,12 @@ export default (_options = {}) => {
 
     store.matchersMap.forEach((matcherSubscribers, matcher) => {
       if (matcher.test(event)) {
-        subscribers.unshift(...getOrderedSubscribers(matcherSubscribers));
+        subscribers.unshift(...sortSubscribers(matcherSubscribers));
       }
     });
 
     if (store.eventsMap.has(event)) {
-      subscribers = subscribers.concat(getOrderedSubscribers(store.eventsMap.get(event)));
+      subscribers = subscribers.concat(sortSubscribers(store.eventsMap.get(event)));
     }
 
     return subscribers;
