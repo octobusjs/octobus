@@ -218,21 +218,21 @@ export default (_options = {}) => {
     return promise;
   };
 
+  const getOrderedSubscribers = (subscribers) => (
+    sortBy(subscribers, ({ config: { priority } }) => -1 * priority)
+  );
+
   const getEventSubscribersMatching = (event) => {
     let subscribers = [];
 
     store.matchersMap.forEach((matcherSubscribers, matcher) => {
       if (matcher.test(event)) {
-        subscribers.unshift(
-          ...sortBy(matcherSubscribers, ({ config: { priority } }) => -1 * priority)
-        );
+        subscribers.unshift(...getOrderedSubscribers(matcherSubscribers));
       }
     });
 
     if (store.eventsMap.has(event)) {
-      subscribers = subscribers.concat(
-        sortBy(store.eventsMap.get(event), ({ config: { priority } }) => -1 * priority)
-      );
+      subscribers = subscribers.concat(getOrderedSubscribers(store.eventsMap.get(event)));
     }
 
     return subscribers;
