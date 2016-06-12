@@ -1,7 +1,9 @@
-import { set, get, sortBy } from 'lodash';
+import set from 'lodash/set';
+import get from 'lodash/get';
 import Joi from 'joi';
 import EventEmitter from 'events';
 import { createOneTimeCallable, validateEvent } from './utils';
+import HandlersMap from './HandlersMap';
 
 const callableErrorMessage = 'The result was already handled!';
 
@@ -35,8 +37,8 @@ export default (_options = {}) => {
   const { delimiter, processParams, createEventEmitter } = options;
 
   const store = {
-    eventsMap: new Map(),
-    matchersMap: new Map(),
+    eventsMap: new HandlersMap(),
+    matchersMap: new HandlersMap(),
     eventsTree: {},
     proxies: {},
   };
@@ -49,20 +51,6 @@ export default (_options = {}) => {
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
   const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
 
-  const addSubscriberToMap = (map, key, subscriber) => {
-    if (!map.has(key)) {
-      map.set(key, []);
-    }
-
-    const { config } = subscriber;
-
-    if (!config.priority) {
-      config.priority = map.get(key).length + 1;
-    }
-
-    map.get(key).unshift(subscriber);
-  };
-
   const subscribe = (event, handler, config = {}) => {
     if (typeof handler !== 'function') {
       throw new Error(`
@@ -71,18 +59,17 @@ export default (_options = {}) => {
     }
 
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
-    const subscriber = { handler, config };
 
     if (event instanceof RegExp) {
-      addSubscriberToMap(store.matchersMap, event, subscriber);
+      store.matchersMap.add(event, handler, config);
     }
 
     if (typeof event === 'string') {
-      addSubscriberToMap(store.eventsMap, event, subscriber);
+      store.eventsMap.add(event, handler, config);
       set(store.eventsTree, event, store.eventsMap.get(event));
     }
 
-    emit('subscribed', event, subscriber);
+    emit('subscribed', event, { handler, config });
 
     return () => unsubscribe(event, handler);
   };
@@ -100,22 +87,8 @@ export default (_options = {}) => {
   );
 
   const unsubscribe = (event, handler = null) => {
-    if (store.matchersMap.has(event)) {
-      store.matchersMap.delete(event);
-    }
-
-    if (store.eventsMap.has(event)) {
-      if (!handler) {
-        store.eventsMap.delete(event);
-      } else {
-        const index = store.eventsMap.get(event).findIndex(
-          (subscriber) => subscriber.handler === handler
-        );
-        if (index > -1) {
-          store.eventsMap.get(event).splice(index, 1);
-        }
-      }
-    }
+    store.matchersMap.remove(event, handler);
+    store.eventsMap.remove(event, handler);
 
     emit('unsubscribed', event, handler);
   };
@@ -218,21 +191,17 @@ export default (_options = {}) => {
     return promise;
   };
 
-  const sortSubscribers = (subscribers) => (
-    sortBy(subscribers, ({ config: { priority } }) => -1 * priority)
-  );
-
   const getEventSubscribersMatching = (event) => {
     let subscribers = [];
 
-    store.matchersMap.forEach((matcherSubscribers, matcher) => {
+    for (const matcher of store.matchersMap.keys()) {
       if (matcher.test(event)) {
-        subscribers.unshift(...sortSubscribers(matcherSubscribers));
+        subscribers.unshift(...store.matchersMap.getByPriority(matcher));
       }
-    });
+    }
 
     if (store.eventsMap.has(event)) {
-      subscribers = subscribers.concat(sortSubscribers(store.eventsMap.get(event)));
+      subscribers = subscribers.concat(store.eventsMap.getByPriority(event));
     }
 
     return subscribers;
