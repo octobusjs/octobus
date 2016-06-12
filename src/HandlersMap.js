@@ -1,23 +1,20 @@
 import sortBy from 'lodash/sortBy';
 
 export default class HandlersMap extends Map {
-  add(key, handler, config = {}) {
+  add(key, handler) {
     if (!this.has(key)) {
       this.set(key, []);
     }
 
-    if (!config.priority) {
-      config.priority = this.get(key).length + 1; // eslint-disable-line
+    if (!handler.getConfig('priority')) {
+      handler.setConfig('priority', this.get(key).length + 1);
     }
 
-    this.get(key).unshift({
-      handler,
-      config,
-    });
+    this.get(key).unshift(handler);
   }
 
   getByPriority(key) {
-    return sortBy(this.get(key), ({ config: { priority } }) => -1 * priority);
+    return sortBy(this.get(key), (handler) => -1 * handler.getConfig('priority'));
   }
 
   remove(key, handler = null) {
@@ -28,7 +25,7 @@ export default class HandlersMap extends Map {
     if (!handler) {
       this.delete(key);
     } else {
-      const index = this.get(key).findIndex(({ handler: _handler }) => handler === _handler);
+      const index = this.get(key).findIndex((_handler) => _handler.isEqualTo(handler));
       if (index > -1) {
         this.get(key).splice(index, 1);
       }

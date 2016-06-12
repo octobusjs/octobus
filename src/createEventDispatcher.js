@@ -2,10 +2,9 @@ import set from 'lodash/set';
 import get from 'lodash/get';
 import Joi from 'joi';
 import EventEmitter from 'events';
-import { createOneTimeCallable, validateEvent } from './utils';
+import { validateEvent } from './utils';
 import HandlersMap from './HandlersMap';
-
-const callableErrorMessage = 'The result was already handled!';
+import Handler from './Handler';
 
 const defaultOptions = {
   delimiter: '.',
@@ -51,25 +50,27 @@ export default (_options = {}) => {
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
   const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
 
-  const subscribe = (event, handler, config = {}) => {
-    if (typeof handler !== 'function') {
+  const subscribe = (event, fn, config = {}) => {
+    if (typeof fn !== 'function') {
       throw new Error(`
-        Event handler for ${event.toString()} has to be a function (got ${typeof handler} instead)!
+        Event handler for ${event.toString()} has to be a function (got ${typeof fn} instead)!
       `);
     }
 
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
+    const handler = new Handler(fn, config);
+
     if (event instanceof RegExp) {
-      store.matchersMap.add(event, handler, config);
+      store.matchersMap.add(event, handler);
     }
 
     if (typeof event === 'string') {
-      store.eventsMap.add(event, handler, config);
+      store.eventsMap.add(event, handler);
       set(store.eventsTree, event, store.eventsMap.get(event));
     }
 
-    emit('subscribed', event, { handler, config });
+    emit('subscribed', event, handler);
 
     return () => unsubscribe(event, handler);
   };
@@ -144,53 +145,6 @@ export default (_options = {}) => {
     ), {});
   };
 
-  const runHandler = (handler, params, config, next) => {
-    let resolve;
-    let reject;
-
-    const promise = new Promise((_resolve, _reject) => {
-      resolve = _resolve;
-      reject = _reject;
-    });
-
-    const handleResult = createOneTimeCallable((err, result) => {
-      if (err) {
-        emitter.emit('error', err);
-        reject(err);
-      } else {
-        resolve(result);
-      }
-    }, callableErrorMessage);
-
-    const reply = (value) => {
-      const err = value instanceof Error ? value : null;
-      handleResult(err, value);
-    };
-
-    try {
-      params = processParams(params, config); // eslint-disable-line no-param-reassign
-
-      const result = handler({
-        params,
-        next,
-        dispatch,
-        lookup,
-        emit,
-        emitBefore,
-        emitAfter,
-        reply,
-      }, handleResult);
-
-      if (result !== undefined) {
-        handleResult(null, result);
-      }
-    } catch (err) {
-      handleResult(err);
-    }
-
-    return promise;
-  };
-
   const getEventSubscribersMatching = (event) => {
     let subscribers = [];
 
@@ -212,11 +166,21 @@ export default (_options = {}) => {
       return Promise.resolve(params);
     }
 
-    const { handler, config } = subscribers.shift();
+    const handler = subscribers.shift();
 
     const next = (nextParams) => cascadeSubscribers(subscribers, nextParams);
 
-    return runHandler(handler, params, config, next);
+    return handler.run({
+      params,
+      next,
+      dispatch,
+      lookup,
+      emit,
+      emitBefore,
+      emitAfter,
+      processParams,
+      onError: (err) => emitter.emit('error', err),
+    });
   };
 
   return {
