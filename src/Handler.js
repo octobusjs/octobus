@@ -27,17 +27,8 @@ export default class Handler {
     return this.fn === fn;
   }
 
-  run({
-    params,
-    next,
-    dispatch,
-    lookup,
-    emit,
-    emitBefore,
-    emitAfter,
-    processParams,
-    onError,
-  }) {
+  run(options) {
+    const { params, processParams, onError, ...args } = options;
     let resolve;
     let reject;
 
@@ -61,16 +52,9 @@ export default class Handler {
     };
 
     try {
-      params = processParams(params, this.config); // eslint-disable-line no-param-reassign
-
       const result = this.fn({
-        params,
-        next,
-        dispatch,
-        lookup,
-        emit,
-        emitBefore,
-        emitAfter,
+        ...args,
+        params: processParams(params, this.config),
         reply,
       }, handleResult);
 
