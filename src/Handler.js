@@ -1,3 +1,4 @@
+import Joi from 'joi';
 import set from 'lodash/set';
 import get from 'lodash/get';
 import { createOneTimeCallable } from './utils';
@@ -27,8 +28,23 @@ export default class Handler {
     return this.fn === fn;
   }
 
+  processParams(params) {
+    const { defaultParams, schema } = this.config;
+    let processedParams = params;
+
+    if (defaultParams) {
+      processedParams = Object.assign({}, defaultParams, params);
+    }
+
+    if (schema) {
+      processedParams = Joi.attempt(processedParams, schema);
+    }
+
+    return processedParams;
+  }
+
   run(options) {
-    const { params, processParams, onError, ...args } = options;
+    const { onError, ...args } = options;
     let resolve;
     let reject;
 
@@ -52,9 +68,11 @@ export default class Handler {
     };
 
     try {
+      const params = this.processParams(options.params);
+
       const result = this.fn({
         ...args,
-        params: processParams(params, this.config),
+        params,
         reply,
       }, handleResult);
 

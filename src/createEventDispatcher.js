@@ -1,39 +1,16 @@
 import set from 'lodash/set';
 import get from 'lodash/get';
-import Joi from 'joi';
 import EventEmitter from 'events';
 import { validateEvent } from './utils';
 import HandlersMap from './HandlersMap';
 import Handler from './Handler';
 
-const defaultOptions = {
-  delimiter: '.',
-
-  createEventEmitter() {
-    const emitter = new EventEmitter();
-    emitter.on('error', () => {});
-    return emitter;
-  },
-
-  processParams(params, config = {}) {
-    const { defaultParams, schema } = config;
-    let finalParams = params;
-
-    if (defaultParams) {
-      finalParams = Object.assign({}, defaultParams, params);
-    }
-
-    if (schema) {
-      finalParams = Joi.attempt(finalParams, schema);
-    }
-
-    return finalParams;
-  },
-};
-
-export default (_options = {}) => {
-  const options = Object.assign({}, defaultOptions, _options);
-  const { delimiter, processParams, createEventEmitter } = options;
+export default (options = {}) => {
+  const { delimiter, emitter } = {
+    delimiter: '.',
+    emitter: new EventEmitter(),
+    ...options,
+  };
 
   const store = {
     eventsMap: new HandlersMap(),
@@ -42,13 +19,14 @@ export default (_options = {}) => {
     proxies: {},
   };
 
-  const emitter = createEventEmitter();
   const on = (...args) => emitter.on(...args);
   const emit = (event, ...args) => emitter.emit(event, ...args.concat([{ dispatch, lookup }]));
   const onBefore = (event, ...args) => on(`before:${event}`, ...args);
   const onAfter = (event, ...args) => on(`after:${event}`, ...args);
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
   const emitAfter = (event, ...args) => emit(`after:${event}`, ...args);
+
+  emitter.on('error', () => {});
 
   const subscribe = (event, fn, config = {}) => {
     if (typeof fn !== 'function') {
@@ -170,6 +148,8 @@ export default (_options = {}) => {
 
     const next = (nextParams) => cascadeSubscribers(subscribers, nextParams);
 
+    const onError = (err) => emitter.emit('error', err);
+
     return handler.run({
       params,
       next,
@@ -178,8 +158,7 @@ export default (_options = {}) => {
       emit,
       emitBefore,
       emitAfter,
-      processParams,
-      onError: (err) => emitter.emit('error', err),
+      onError,
     });
   };
 
