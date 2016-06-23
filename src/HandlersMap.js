@@ -7,10 +7,16 @@ export default class HandlersMap extends Map {
     }
 
     if (!handler.getConfig('priority')) {
-      handler.setConfig('priority', this.get(key).length + 1);
+      handler.setConfig('priority', this.getMaxPriority(key) + 1);
     }
 
     this.get(key).unshift(handler);
+  }
+
+  getMaxPriority(key) {
+    return (this.get(key) || []).reduce((max, handler) => (
+      Math.max(handler.getConfig('priority'), max)
+    ), 0);
   }
 
   getByPriority(key) {

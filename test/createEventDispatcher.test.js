@@ -244,11 +244,11 @@ describe('createEventDispatcher', () => {
   });
 
   it('should be handle the subscribers using priorities', () => {
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 3`), { priority: 100 });
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), { priority: 100 });
 
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`));
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 3`));
 
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), { priority: 5 });
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`), { priority: 5 });
 
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 2`), { priority: 1000 });
 
