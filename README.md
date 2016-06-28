@@ -36,7 +36,7 @@ dispatcher.subscribe('math.sum', ({ params }, cb) => (
 ));
 ```
 
-The handlers has 2 parameters: the first one is an options object and the second one is the callback you need to call when you want to return the result.
+The handler has 2 parameters: the first one is an options object and the second one is the callback you need to call when you want to return the result.
 
 One of the properties of the options object is a `params` object - a container of the actual message.
 
