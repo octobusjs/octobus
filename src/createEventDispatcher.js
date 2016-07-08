@@ -1,7 +1,7 @@
 import set from 'lodash/set';
 import get from 'lodash/get';
 import EventEmitter from 'events';
-import { validateEvent, runHandler } from './utils';
+import { validateEvent, createOneTimeCallable } from './utils';
 import HandlersMap from './HandlersMap';
 
 export default (options = {}) => {
@@ -134,6 +134,46 @@ export default (options = {}) => {
     }
 
     return handlers;
+  };
+
+  const runHandler = (handler, args) => {
+    const { onError, ...restArgs } = args;
+    let resolve;
+    let reject;
+
+    const promise = new Promise((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+
+    const handleResult = createOneTimeCallable((err, result) => {
+      if (err) {
+        onError(err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    }, 'The result was already handled!');
+
+    const reply = (value) => {
+      const err = value instanceof Error ? value : null;
+      handleResult(err, value);
+    };
+
+    try {
+      const result = handler({
+        ...restArgs,
+        reply,
+      }, handleResult);
+
+      if (result !== undefined) {
+        handleResult(null, result);
+      }
+    } catch (err) {
+      handleResult(err);
+    }
+
+    return promise;
   };
 
   const cascadeHandlers = (handlers, params) => {
