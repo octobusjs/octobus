@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import _memoize from 'lodash/memoize';
 
 const applyDefaultParams = (params, defaultParams) => {
   if (typeof defaultParams === 'object' && !Array.isArray(defaultParams)) {
@@ -28,3 +29,5 @@ export const applyConfig = (handler, config) => (args, cb) => {
 };
 
 export const toHandler = (fn) => ({ params }) => fn(params);
+
+export const memoize = (fn) => _memoize(fn, ({ params }) => params);

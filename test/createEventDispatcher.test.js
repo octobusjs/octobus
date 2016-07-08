@@ -2,7 +2,7 @@ import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { createEventDispatcher, decorators } from '../src';
-const { applyConfig, toHandler } = decorators;
+const { applyConfig, toHandler, memoize } = decorators;
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -410,5 +410,15 @@ describe('createEventDispatcher', () => {
     return dispatcher.dispatch('math', { left: 1, right: 2 }).then((result) => {
       expect(result).to.equal(3);
     });
+  });
+
+  it('should memoize a handler', () => {
+    const stub = sinon.stub().returns('it works');
+    dispatcher.subscribe('test', memoize(stub));
+    return dispatcher.dispatch('test').then(() => (
+      dispatcher.dispatch('test').then(() => {
+        expect(stub).to.have.been.calledOnce();
+      })
+    ));
   });
 });
