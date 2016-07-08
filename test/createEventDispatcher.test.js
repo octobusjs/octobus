@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { createEventDispatcher } from '../src';
+import { createEventDispatcher, applyConfig } from '../src';
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -321,25 +321,6 @@ describe('createEventDispatcher', () => {
     }, (err) => {
       expect(err).to.exist();
       expect(err.message).to.match(/No subscribers registered/);
-    });
-  });
-
-  it('should unsubscribe only one handlers for a specific event', () => {
-    const subscriber1 = sinon.stub();
-    const subscriber2 = sinon.stub();
-    subscriber1.onCall(0).returns(true);
-    subscriber2.onCall(0).returns(true);
-
-    dispatcher.subscribe('test', subscriber1);
-    dispatcher.subscribe('test', ({ next }) => next(subscriber2()));
-
-    dispatcher.unsubscribe('test', subscriber1);
-
-    return dispatcher.dispatch('test').then(() => {
-      expect(subscriber1).to.not.have.been.called();
-      expect(subscriber2).to.have.been.called();
-    }, (err) => {
-      expect(err).not.to.exist();
     });
   });
 

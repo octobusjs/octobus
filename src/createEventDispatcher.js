@@ -1,9 +1,8 @@
 import set from 'lodash/set';
 import get from 'lodash/get';
 import EventEmitter from 'events';
-import { validateEvent } from './utils';
+import { validateEvent, applyConfig, runHandler } from './utils';
 import HandlersMap from './HandlersMap';
-import Handler from './Handler';
 
 export default (options = {}) => {
   const { delimiter, emitter } = {
@@ -35,16 +34,17 @@ export default (options = {}) => {
       `);
     }
 
+    const { priority } = config;
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
 
-    const handler = new Handler(fn, config);
+    const handler = applyConfig(fn, config);
 
     if (event instanceof RegExp) {
-      store.matchersMap.add(event, handler);
+      store.matchersMap.add(event, handler, priority);
     }
 
     if (typeof event === 'string') {
-      store.eventsMap.add(event, handler);
+      store.eventsMap.add(event, handler, priority);
       set(store.eventsTree, event, store.eventsMap.get(event));
     }
 
@@ -150,7 +150,7 @@ export default (options = {}) => {
 
     const onError = (err) => emitter.emit('error', err);
 
-    return handler.run({
+    return runHandler(handler, {
       params,
       next,
       dispatch,
