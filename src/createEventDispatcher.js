@@ -1,7 +1,7 @@
 import set from 'lodash/set';
 import get from 'lodash/get';
 import EventEmitter from 'events';
-import { validateEvent, applyConfig, runHandler } from './utils';
+import { validateEvent, runHandler } from './utils';
 import HandlersMap from './HandlersMap';
 
 export default (options = {}) => {
@@ -27,17 +27,14 @@ export default (options = {}) => {
 
   emitter.on('error', () => {});
 
-  const subscribe = (event, fn, config = {}) => {
-    if (typeof fn !== 'function') {
+  const subscribe = (event, handler, priority) => {
+    if (typeof handler !== 'function') {
       throw new Error(`
-        Event handler for ${event.toString()} has to be a function (got ${typeof fn} instead)!
+        Event handler for ${event.toString()} has to be a function (got ${typeof handler} instead)!
       `);
     }
 
-    const { priority } = config;
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
-
-    const handler = applyConfig(fn, config);
 
     if (event instanceof RegExp) {
       store.matchersMap.add(event, handler, priority);
@@ -81,22 +78,22 @@ export default (options = {}) => {
       );
     }
 
-    let subscribers;
+    let handlers;
 
     if (store.proxies[event]) {
       const { targetEvent, paramsTransformer } = store.proxies[event];
-      subscribers = getEventSubscribersMatching(targetEvent);
+      handlers = getEventHandlersMatching(targetEvent);
       params = paramsTransformer(params); // eslint-disable-line no-param-reassign
     } else {
-      subscribers = getEventSubscribersMatching(event);
+      handlers = getEventHandlersMatching(event);
     }
 
-    if (!subscribers.length) {
-      return Promise.reject(new Error(`No subscribers registered for the ${event} event.`));
+    if (!handlers.length) {
+      return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
     emitBefore(event, params, { dispatch, lookup });
-    return cascadeSubscribers(subscribers, params).then((result) => {
+    return cascadeHandlers(handlers, params).then((result) => {
       emitAfter(event, result, { dispatch, lookup });
 
       return done ? done(null, result) : result;
@@ -123,30 +120,30 @@ export default (options = {}) => {
     ), {});
   };
 
-  const getEventSubscribersMatching = (event) => {
-    let subscribers = [];
+  const getEventHandlersMatching = (event) => {
+    let handlers = [];
 
     for (const matcher of store.matchersMap.keys()) {
       if (matcher.test(event)) {
-        subscribers.unshift(...store.matchersMap.getByPriority(matcher));
+        handlers.unshift(...store.matchersMap.getByPriority(matcher));
       }
     }
 
     if (store.eventsMap.has(event)) {
-      subscribers = subscribers.concat(store.eventsMap.getByPriority(event));
+      handlers = handlers.concat(store.eventsMap.getByPriority(event));
     }
 
-    return subscribers;
+    return handlers;
   };
 
-  const cascadeSubscribers = (subscribers, params) => {
-    if (!subscribers.length) {
+  const cascadeHandlers = (handlers, params) => {
+    if (!handlers.length) {
       return Promise.resolve(params);
     }
 
-    const handler = subscribers.shift();
+    const handler = handlers.shift();
 
-    const next = (nextParams) => cascadeSubscribers(subscribers, nextParams);
+    const next = (nextParams) => cascadeHandlers(handlers, nextParams);
 
     const onError = (err) => emitter.emit('error', err);
 

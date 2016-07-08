@@ -1,7 +1,8 @@
 import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { createEventDispatcher, applyConfig } from '../src';
+import { createEventDispatcher, decorators } from '../src';
+const { applyConfig, toHandler } = decorators;
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -55,7 +56,7 @@ describe('createEventDispatcher', () => {
     const onResolve = sinon.spy();
     return dispatcher.dispatch('foo.bar').then(onResolve, (err) => {
       expect(err).to.exist();
-      expect(err.message).to.equal('No subscribers registered for the foo.bar event.');
+      expect(err.message).to.equal('No handlers registered for the foo.bar event.');
     }).then(() => {
       expect(onResolve).to.not.have.been.called();
     });
@@ -179,11 +180,11 @@ describe('createEventDispatcher', () => {
   });
 
   it('should validate the passed in parameters', () => {
-    dispatcher.subscribe('test', ({ params }) => params, {
+    dispatcher.subscribe('test', applyConfig(({ params }) => params, {
       schema: Joi.object({
         foo: Joi.any().valid('foo'),
       }).required(),
-    });
+    }));
 
     dispatcher.on('error', (err) => {
       expect(err).to.be.an.instanceof(Error);
@@ -196,11 +197,11 @@ describe('createEventDispatcher', () => {
   });
 
   it('should take into consideration the default parameters', () => {
-    dispatcher.subscribe('test', ({ params }) => params, {
+    dispatcher.subscribe('test', applyConfig(({ params }) => params, {
       defaultParams: {
         foo: 'bar',
       },
-    });
+    }));
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result).to.deep.equal({
@@ -243,16 +244,16 @@ describe('createEventDispatcher', () => {
     });
   });
 
-  it('should be handle the subscribers using priorities', () => {
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), { priority: 100 });
+  it('should handle the subscribers using priorities', () => {
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), 100);
 
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 3`));
 
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`), { priority: 5 });
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`), 5);
 
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 2`), { priority: 1000 });
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 2`), 1000);
 
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 1`), { priority: 10000 });
+    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 1`), 10000);
 
     return dispatcher.dispatch('test', 0).then((result) => {
       expect(result.trim()).to.equal('0 1 2 3 4 5');
@@ -320,7 +321,7 @@ describe('createEventDispatcher', () => {
       expect(subscriber2).to.not.have.been.called();
     }, (err) => {
       expect(err).to.exist();
-      expect(err.message).to.match(/No subscribers registered/);
+      expect(err.message).to.match(/No handlers registered/);
     });
   });
 
@@ -339,7 +340,7 @@ describe('createEventDispatcher', () => {
 
       return Something.foo().catch((err) => {
         expect(err).to.exist();
-        expect(err.message).to.match(/No subscribers registered/);
+        expect(err.message).to.match(/No handlers registered/);
       });
     });
   });
@@ -401,6 +402,13 @@ describe('createEventDispatcher', () => {
     dispatcher.proxy('proxyTest', 'test', (params) => `${params}!!`);
     return dispatcher.dispatch('proxyTest', 'it works').then((result) => {
       expect(result).to.equal('it works!!!');
+    });
+  });
+
+  it('should convert a function to a handler', () => {
+    dispatcher.subscribe('math', toHandler(({ left, right }) => left + right));
+    return dispatcher.dispatch('math', { left: 1, right: 2 }).then((result) => {
+      expect(result).to.equal(3);
     });
   });
 });

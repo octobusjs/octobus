@@ -1,2 +1,3 @@
 export createEventDispatcher from './createEventDispatcher';
-export { applyConfig } from './utils';
+import * as decorators from './decorators';
+export { decorators };
