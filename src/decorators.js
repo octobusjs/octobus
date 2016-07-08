@@ -1,26 +1,20 @@
 import Joi from 'joi';
 import _memoize from 'lodash/memoize';
 
-const applyDefaultParams = (params, defaultParams) => {
-  if (typeof defaultParams === 'object' && !Array.isArray(defaultParams)) {
-    return { ...defaultParams, ...params };
-  }
+export const withDefaultParams = (handler, defaultParams) => (args, cb) => {
+  const { params } = args;
+  const isPlainObject = typeof defaultParams === 'object' && !Array.isArray(defaultParams);
+  const processedParams = isPlainObject ? { ...defaultParams, ...params } : params || defaultParams;
 
-  return defaultParams || params;
+  return handler({
+    ...args,
+    params: processedParams,
+  }, cb);
 };
 
-export const applyConfig = (handler, config) => (args, cb) => {
-  const { defaultParams, schema } = config;
+export const withSchema = (handler, schema) => (args, cb) => {
   const { params } = args;
-  let processedParams = params;
-
-  if (defaultParams) {
-    processedParams = applyDefaultParams(processedParams, defaultParams);
-  }
-
-  if (schema) {
-    processedParams = Joi.attempt(processedParams, schema);
-  }
+  const processedParams = Joi.attempt(params, schema);
 
   return handler({
     ...args,

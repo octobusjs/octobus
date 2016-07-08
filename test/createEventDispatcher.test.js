@@ -2,7 +2,7 @@ import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { createEventDispatcher, decorators } from '../src';
-const { applyConfig, toHandler, memoize } = decorators;
+const { withDefaultParams, withSchema, toHandler, memoize } = decorators;
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -180,11 +180,12 @@ describe('createEventDispatcher', () => {
   });
 
   it('should validate the passed in parameters', () => {
-    dispatcher.subscribe('test', applyConfig(({ params }) => params, {
-      schema: Joi.object({
+    dispatcher.subscribe('test', withSchema(
+      ({ params }) => params,
+      Joi.object({
         foo: Joi.any().valid('foo'),
-      }).required(),
-    }));
+      }).required()
+    ));
 
     dispatcher.on('error', (err) => {
       expect(err).to.be.an.instanceof(Error);
@@ -197,11 +198,12 @@ describe('createEventDispatcher', () => {
   });
 
   it('should take into consideration the default parameters', () => {
-    dispatcher.subscribe('test', applyConfig(({ params }) => params, {
-      defaultParams: {
+    dispatcher.subscribe('test', withDefaultParams(
+      ({ params }) => params,
+      {
         foo: 'bar',
       },
-    }));
+    ));
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result).to.deep.equal({
