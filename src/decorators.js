@@ -32,7 +32,7 @@ export const withNamespace = (namespace, handler) => (args) => {
   });
 };
 
-export const withLookups = (lookups, handler) => (args) => {
+export const withLookups = (handler, lookups) => (args) => {
   const { lookup } = args;
 
   const dispatches = Object.keys(lookups).reduce((ds, key) => ({

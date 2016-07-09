@@ -2,7 +2,13 @@ import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { createEventDispatcher, decorators } from '../src';
-const { withDefaultParams, withSchema, toHandler, memoize } = decorators;
+const {
+  withDefaultParams,
+  withSchema,
+  toHandler,
+  memoize,
+  withLookups,
+} = decorators;
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -148,12 +154,19 @@ describe('createEventDispatcher', () => {
 
   it('should lookup namespaces', () => {
     dispatcher.subscribe('namespace.test', () => 'it works');
+    dispatcher.subscribe('namespace.test.secondary', () => 'it works again');
 
-    const { test } = dispatcher.lookup('namespace');
+    const ns = dispatcher.lookup('namespace');
+    const { test } = ns;
 
-    return test().then((result) => {
-      expect(result).to.equal('it works');
-    });
+    return Promise.all([
+      test().then((result) => {
+        expect(result).to.equal('it works');
+      }),
+      ns['test.secondary']().then((result) => {
+        expect(result).to.equal('it works again');
+      }),
+    ]);
   });
 
   it('should handle errors', () => {
@@ -422,5 +435,18 @@ describe('createEventDispatcher', () => {
         expect(stub).to.have.been.calledOnce();
       })
     ));
+  });
+
+  it('should inject lookups as handler params', () => {
+    dispatcher.subscribe('say.hello', ({ params: name }) => `hello ${name}!`);
+    const handler = async ({ say }) => {
+      const answer = await say.hello('John');
+      expect(answer).to.equal('hello John!');
+    };
+    dispatcher.subscribe('test', withLookups(handler, {
+      say: 'say',
+    }));
+
+    return dispatcher.dispatch('test');
   });
 });

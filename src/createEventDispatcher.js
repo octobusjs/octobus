@@ -1,5 +1,3 @@
-import set from 'lodash/set';
-import get from 'lodash/get';
 import EventEmitter from 'events';
 import { validateEvent, createOneTimeCallable } from './utils';
 import HandlersMap from './HandlersMap';
@@ -14,7 +12,6 @@ export default (options = {}) => {
   const store = {
     eventsMap: new HandlersMap(),
     matchersMap: new HandlersMap(),
-    eventsTree: {},
     proxies: {},
   };
 
@@ -35,15 +32,9 @@ export default (options = {}) => {
     }
 
     event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
+    const map = event instanceof RegExp ? store.matchersMap : store.eventsMap;
 
-    if (event instanceof RegExp) {
-      store.matchersMap.add(event, handler, priority);
-    }
-
-    if (typeof event === 'string') {
-      store.eventsMap.add(event, handler, priority);
-      set(store.eventsTree, event, store.eventsMap.get(event));
-    }
+    map.add(event, handler, priority);
 
     emit('subscribed', event, handler);
 
@@ -110,15 +101,13 @@ export default (options = {}) => {
     store.proxies[sourceEvent] = { targetEvent, paramsTransformer };
   };
 
-  const lookup = (path) => {
-    const methods = get(store.eventsTree, path, {});
-
-    return Object.keys(methods).reduce((acc, methodName) => (
-      Object.assign(acc, {
-        [methodName]: (params) => dispatch(`${path}${delimiter}${methodName}`, params),
-      })
-    ), {});
-  };
+  const lookup = (path) => (
+    new Proxy({}, {
+      get(target, methodName) {
+        return (params) => dispatch(`${path}${delimiter}${methodName}`, params);
+      },
+    })
+  );
 
   const getEventHandlersMatching = (event) => {
     let handlers = [];
