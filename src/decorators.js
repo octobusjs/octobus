@@ -22,6 +22,16 @@ export const withSchema = (handler, schema) => (args, cb) => {
   }, cb);
 };
 
+export const withNamespace = (namespace, handler) => (args) => {
+  const { dispatch } = args;
+  const nsDispatch = (event, msg) => dispatch(`${namespace}.${event}`, msg);
+
+  return handler({
+    ...args,
+    nsDispatch,
+  });
+};
+
 export const toHandler = (fn) => ({ params }) => fn(params);
 
-export const memoize = (fn) => _memoize(fn, ({ params }) => params);
+export const memoize = (handler) => _memoize(handler, ({ params }) => params);
