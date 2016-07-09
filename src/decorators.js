@@ -32,6 +32,20 @@ export const withNamespace = (namespace, handler) => (args) => {
   });
 };
 
+export const withLookups = (lookups, handler) => (args) => {
+  const { lookup } = args;
+
+  const dispatches = Object.keys(lookups).reduce((ds, key) => ({
+    ...ds,
+    [key]: lookup(lookups[key]),
+  }), {});
+
+  return handler({
+    ...args,
+    ...dispatches,
+  });
+};
+
 export const toHandler = (fn) => ({ params }) => fn(params);
 
 export const memoize = (handler) => _memoize(handler, ({ params }) => params);
