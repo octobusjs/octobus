@@ -46,6 +46,12 @@ export const withLookups = (handler, lookups) => (args) => {
   });
 };
 
-export const toHandler = (fn) => ({ params }) => fn(params);
+export const toHandler = (handler) => (args) => {
+  const { params } = args;
+  return handler({
+    ...args,
+    ...params,
+  });
+};
 
 export const memoize = (handler) => _memoize(handler, ({ params }) => params);

@@ -69,15 +69,13 @@ export default (options = {}) => {
       );
     }
 
-    let handlers;
-
     if (store.proxies[event]) {
       const { targetEvent, paramsTransformer } = store.proxies[event];
-      handlers = getEventHandlersMatching(targetEvent);
+      event = targetEvent; // eslint-disable-line no-param-reassign
       params = paramsTransformer(params); // eslint-disable-line no-param-reassign
-    } else {
-      handlers = getEventHandlersMatching(event);
     }
+
+    const handlers = getEventHandlersMatching(event);
 
     if (!handlers.length) {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
