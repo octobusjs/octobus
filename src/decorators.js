@@ -24,11 +24,10 @@ export const withSchema = (handler, schema) => (args, cb) => {
 
 export const withNamespace = (namespace, handler) => (args) => {
   const { dispatch } = args;
-  const nsDispatch = (event, msg) => dispatch(`${namespace}.${event}`, msg);
 
   return handler({
     ...args,
-    nsDispatch,
+    dispatch: (event, params) => dispatch(`${namespace}.${event}`, params),
   });
 };
 
