@@ -5,9 +5,10 @@ import { createEventDispatcher, decorators } from '../src';
 const {
   withDefaultParams,
   withSchema,
-  toHandler,
-  memoize,
+  withHandler,
+  withMemoization,
   withLookups,
+  withNamespace,
 } = decorators;
 
 describe('createEventDispatcher', () => {
@@ -421,7 +422,7 @@ describe('createEventDispatcher', () => {
   });
 
   it('should convert a function to a handler', () => {
-    dispatcher.subscribe('math', toHandler(({ left, right }) => left + right));
+    dispatcher.subscribe('math', withHandler(({ left, right }) => left + right));
     return dispatcher.dispatch('math', { left: 1, right: 2 }).then((result) => {
       expect(result).to.equal(3);
     });
@@ -429,7 +430,7 @@ describe('createEventDispatcher', () => {
 
   it('should memoize a handler', () => {
     const stub = sinon.stub().returns('it works');
-    dispatcher.subscribe('test', memoize(stub));
+    dispatcher.subscribe('test', withMemoization(stub));
     return dispatcher.dispatch('test').then(() => (
       dispatcher.dispatch('test').then(() => {
         expect(stub).to.have.been.calledOnce();
@@ -446,6 +447,17 @@ describe('createEventDispatcher', () => {
     dispatcher.subscribe('test', withLookups(handler, {
       say: 'say',
     }));
+
+    return dispatcher.dispatch('test');
+  });
+
+  it('should bind dispatch calls to a namespace', () => {
+    dispatcher.subscribe('say.hello', ({ params: name }) => `hello ${name}!`);
+    const handler = async ({ dispatch }) => {
+      const answer = await dispatch('hello', 'John');
+      expect(answer).to.equal('hello John!');
+    };
+    dispatcher.subscribe('test', withNamespace(handler, 'say'));
 
     return dispatcher.dispatch('test');
   });
