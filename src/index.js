@@ -1,2 +1,3 @@
 export createEventDispatcher from './createEventDispatcher';
-export * as decorators from './decorators';
+import * as decorators from './decorators';
+export { decorators };
