@@ -22,7 +22,7 @@ export const withSchema = (handler, schema) => (args, cb) => {
   }, cb);
 };
 
-export const withNamespace = (handler, namespace) => (args) => {
+export const withNamespace = (handler, namespace) => (args, cb) => {
   const { dispatch } = args;
 
   return handler({
@@ -34,10 +34,10 @@ export const withNamespace = (handler, namespace) => (args) => {
       }
       return dispatch(`${namespacedEvent}`, params);
     },
-  });
+  }, cb);
 };
 
-export const withLookups = (handler, lookups) => (args) => {
+export const withLookups = (handler, lookups) => (args, cb) => {
   const { lookup } = args;
 
   const dispatches = Object.keys(lookups).reduce((ds, key) => ({
@@ -48,15 +48,15 @@ export const withLookups = (handler, lookups) => (args) => {
   return handler({
     ...args,
     ...dispatches,
-  });
+  }, cb);
 };
 
-export const withHandler = (handler) => (args) => {
+export const withHandler = (handler) => (args, cb) => {
   const { params } = args;
   return handler({
     ...args,
     ...params,
-  });
+  }, cb);
 };
 
 export const withMemoization = (handler) => _memoize(handler, ({ params }) => params);
