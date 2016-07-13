@@ -82,7 +82,7 @@ export default (options = {}) => {
     }
 
     emitBefore(event, params, { dispatch, lookup });
-    return cascadeHandlers(handlers, params).then((result) => {
+    return cascadeHandlers(handlers, params, event).then((result) => {
       emitAfter(event, result, { dispatch, lookup });
 
       return done ? done(null, result) : result;
@@ -163,18 +163,19 @@ export default (options = {}) => {
     return promise;
   };
 
-  const cascadeHandlers = (handlers, params) => {
+  const cascadeHandlers = (handlers, params, event) => {
     if (!handlers.length) {
       return Promise.resolve(params);
     }
 
     const handler = handlers.shift();
 
-    const next = (nextParams) => cascadeHandlers(handlers, nextParams);
+    const next = (nextParams) => cascadeHandlers(handlers, nextParams, event);
 
     const onError = (err) => emitter.emit('error', err);
 
     return runHandler(handler, {
+      event,
       params,
       next,
       dispatch,
