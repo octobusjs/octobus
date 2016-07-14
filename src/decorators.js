@@ -32,7 +32,7 @@ export const withNamespace = (handler, namespace) => (args, cb) => {
       if (event) {
         namespacedEvent += `.${event.toString().trim()}`;
       }
-      return dispatch(`${namespacedEvent}`, params);
+      return dispatch(namespacedEvent, params);
     },
   }, cb);
 };
