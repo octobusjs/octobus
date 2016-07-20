@@ -397,30 +397,6 @@ describe('createEventDispatcher', () => {
     });
   });
 
-  it('should proxy events', () => {
-    dispatcher.subscribe('test', () => 'it works');
-    dispatcher.proxy('proxyTest', 'test');
-    return dispatcher.dispatch('proxyTest').then((result) => {
-      expect(result).to.equal('it works');
-    });
-  });
-
-  it('should proxy events and pass the parameters', () => {
-    dispatcher.subscribe('test', ({ params }) => `${params}!`);
-    dispatcher.proxy('proxyTest', 'test');
-    return dispatcher.dispatch('proxyTest', 'it works').then((result) => {
-      expect(result).to.equal('it works!');
-    });
-  });
-
-  it('should proxy events and transform the parameters', () => {
-    dispatcher.subscribe('test', ({ params }) => `${params}!`);
-    dispatcher.proxy('proxyTest', 'test', (params) => `${params}!!`);
-    return dispatcher.dispatch('proxyTest', 'it works').then((result) => {
-      expect(result).to.equal('it works!!!');
-    });
-  });
-
   it('should convert a function to a handler', () => {
     dispatcher.subscribe('math', withHandler(({ left, right }) => left + right));
     return dispatcher.dispatch('math', { left: 1, right: 2 }).then((result) => {

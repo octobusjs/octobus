@@ -12,7 +12,6 @@ export default (options = {}) => {
   const store = {
     eventsMap: new HandlersMap(),
     matchersMap: new HandlersMap(),
-    proxies: {},
   };
 
   const on = (...args) => emitter.on(...args);
@@ -69,12 +68,6 @@ export default (options = {}) => {
       );
     }
 
-    if (store.proxies[event]) {
-      const { targetEvent, paramsTransformer } = store.proxies[event];
-      event = targetEvent; // eslint-disable-line no-param-reassign
-      params = paramsTransformer(params); // eslint-disable-line no-param-reassign
-    }
-
     const handlers = getEventHandlersMatching(event);
 
     if (!handlers.length) {
@@ -93,10 +86,6 @@ export default (options = {}) => {
 
       throw err;
     });
-  };
-
-  const proxy = (sourceEvent, targetEvent, paramsTransformer = (i) => i) => {
-    store.proxies[sourceEvent] = { targetEvent, paramsTransformer };
   };
 
   const lookup = (path) => (
@@ -189,6 +178,6 @@ export default (options = {}) => {
 
   return {
     emit, emitBefore, emitAfter, on, onBefore, onAfter,
-    dispatch, subscribe, unsubscribe, subscribeMap, lookup, proxy,
+    dispatch, subscribe, unsubscribe, subscribeMap, lookup,
   };
 };
