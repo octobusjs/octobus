@@ -1,11 +1,12 @@
 import EventEmitter from 'events';
-import { validateEvent, createOneTimeCallable } from './utils';
+import { validateEvent, createOneTimeCallable, compose } from './utils';
 import HandlersMap from './HandlersMap';
 
 export default (options = {}) => {
-  const { delimiter, emitter } = {
+  const { delimiter, emitter, middlewares } = {
     delimiter: '.',
     emitter: new EventEmitter(),
+    middlewares: [],
     ...options,
   };
 
@@ -59,8 +60,12 @@ export default (options = {}) => {
     emit('unsubscribed', event, handler);
   };
 
+  const runMiddlewares = (...args) => compose(...middlewares.reverse())(...args);
+
   const dispatch = (event, params, done) => {
-    event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
+    const res = runMiddlewares({ event, params });
+    event = validateEvent(res.event, delimiter); // eslint-disable-line no-param-reassign
+    params = res.params; // eslint-disable-line no-param-reassign
 
     if (typeof event !== 'string') {
       throw new Error(
