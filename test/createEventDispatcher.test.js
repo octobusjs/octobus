@@ -79,10 +79,10 @@ describe('createEventDispatcher', () => {
 
     const promise = dispatcher.dispatch('test', 'foo');
     expect(before).to.have.been.calledOnce();
-    expect(before).to.have.been.calledWith('foo');
+    expect(before).to.have.been.calledWithMatch({ params: 'foo' });
     return promise.then(() => {
       expect(after).to.have.been.calledOnce();
-      expect(after).to.have.been.calledWith('bar');
+      expect(after).to.have.been.calledWithMatch({ params: 'foo', result: 'bar' });
     });
   });
 
