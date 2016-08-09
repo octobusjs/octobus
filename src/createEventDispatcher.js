@@ -79,9 +79,9 @@ export default (options = {}) => {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
-    emitBefore(event, params, { dispatch, lookup });
+    emitBefore(event, { params, dispatch, lookup });
     return cascadeHandlers(handlers, params, event).then((result) => {
-      emitAfter(event, result, { dispatch, lookup });
+      emitAfter(event, { params, result, dispatch, lookup });
 
       return done ? done(null, result) : result;
     }, (err) => {
