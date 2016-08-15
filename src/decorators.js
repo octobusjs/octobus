@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import _memoize from 'lodash/memoize';
+import memoize from 'lodash/memoize';
 
 export const withDefaultParams = (handler, defaultParams) => (args, cb) => {
   const { params } = args;
@@ -59,4 +59,4 @@ export const withHandler = (handler) => (args, cb) => {
   }, cb);
 };
 
-export const withMemoization = (handler) => _memoize(handler, ({ params }) => params);
+export const withMemoization = (handler) => memoize(handler, ({ params }) => params);
