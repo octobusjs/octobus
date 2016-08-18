@@ -3,8 +3,6 @@ import { createOneTimeCallable, compose } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
 
-const delimiter = '.';
-
 export default (options = {}) => {
   const { emitter, middlewares } = {
     emitter: new EventEmitter(),
@@ -51,7 +49,7 @@ export default (options = {}) => {
 
   const subscribeMap = (prefix, map) => (
     Object.keys(map).reduce((acc, method) => {
-      const eventIdentifier = `${prefix}${delimiter}${method}`;
+      const eventIdentifier = `${prefix}.${method}`;
       const handler = map[method];
       subscribe(eventIdentifier, handler);
 
@@ -96,7 +94,7 @@ export default (options = {}) => {
   const lookup = (path) => (
     new Proxy({}, {
       get(target, methodName) {
-        return (params) => dispatch(`${path}${delimiter}${methodName}`, params);
+        return (params) => dispatch(`${path}.${methodName}`, params);
       },
     })
   );

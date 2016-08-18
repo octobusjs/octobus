@@ -239,14 +239,6 @@ describe('createEventDispatcher', () => {
     });
   });
 
-  it('should be able to subscribe using an array event', () => {
-    dispatcher.subscribe(['this', 'is', 'an', 'array'], () => 'it works');
-
-    return dispatcher.dispatch('this.is.an.array').then((result) => {
-      expect(result).to.equal('it works');
-    });
-  });
-
   it('should handle the subscribers using priorities', () => {
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), 100);
 
