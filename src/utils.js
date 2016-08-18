@@ -1,7 +1,5 @@
-import Joi from 'joi';
+import shortid from 'shortid';
 
-const restrictedEvents = ['error', 'subscribe', 'unsubscribe'];
-const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
 const callableErrorMessage = 'Callback already called!';
 
 export const createOneTimeCallable = (fn, errorMessage = callableErrorMessage) => {
@@ -14,24 +12,6 @@ export const createOneTimeCallable = (fn, errorMessage = callableErrorMessage) =
 
     return fn(...args);
   };
-};
-
-export const validateEvent = (event, delimiter) => {
-  Joi.assert(event, [
-    Joi.string().regex(validEventPattern).invalid(restrictedEvents),
-    Joi.array().min(1).items(Joi.string().regex(validEventPattern)),
-    Joi.object().type(RegExp),
-  ]);
-
-  if (Array.isArray(event)) {
-    return validateEvent(event.join(delimiter));
-  }
-
-  if (typeof event === 'string') {
-    return event.trim();
-  }
-
-  return event;
 };
 
 // https://github.com/reactjs/redux/blob/master/src/compose.js
@@ -48,3 +28,5 @@ export const compose = (...funcs) => {
   const rest = funcs.slice(0, -1);
   return (...args) => rest.reduceRight((composed, f) => f(composed), last(...args));
 };
+
+export const generateUId = () => shortid.generate();

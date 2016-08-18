@@ -1,9 +1,9 @@
 import sortBy from 'lodash/sortBy';
 
 export default class HandlersMap extends Map {
-  add(key, handler, priority) {
+  set(key, handler, priority) {
     if (!this.has(key)) {
-      this.set(key, []);
+      super.set(key, []);
     }
 
     if (priority === undefined) {
@@ -23,13 +23,13 @@ export default class HandlersMap extends Map {
     return sortBy(this.get(key), ({ priority }) => -1 * priority).map(({ handler }) => handler);
   }
 
-  remove(key, handler = null) {
+  delete(key, handler = null) {
     if (!this.has(key)) {
       return false;
     }
 
     if (!handler) {
-      this.delete(key);
+      super.delete(key);
     } else {
       const index = this.get(key).findIndex(({ handler: _handler }) => _handler === handler);
       if (index > -1) {
