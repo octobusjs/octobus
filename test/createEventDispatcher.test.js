@@ -52,10 +52,9 @@ describe('createEventDispatcher', () => {
   });
 
   it('should throw an error when dispatching an invalid event', () => {
-    expect(dispatcher.dispatch).to.throw(/you can only dispatch events of type string/i);
+    expect(dispatcher.dispatch).to.throw(/is required/i);
     expect(() => dispatcher.dispatch('')).to.throw(/not allowed to be empty/);
     expect(() => dispatcher.dispatch(Math.random())).to.throw();
-    expect(() => dispatcher.dispatch(/test/)).to.throw();
     expect(() => dispatcher.dispatch('foo!bar')).to.throw();
   });
 
@@ -248,18 +247,6 @@ describe('createEventDispatcher', () => {
     });
   });
 
-  it('should respect the order of regular expressions based susbcribers', () => {
-    dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 3`));
-    dispatcher.subscribe(/^test$/, ({ next, params }) => next(`${params} 2`));
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`));
-    dispatcher.subscribe(/test/, ({ next, params }) => next(`${params} 1`));
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`));
-
-    return dispatcher.dispatch('test', 0).then((result) => {
-      expect(result.trim()).to.equal('0 1 2 3 4 5');
-    });
-  });
-
   it('should handle the subscribers using priorities', () => {
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 4`), 100);
 
@@ -273,15 +260,6 @@ describe('createEventDispatcher', () => {
 
     return dispatcher.dispatch('test', 0).then((result) => {
       expect(result.trim()).to.equal('0 1 2 3 4 5');
-    });
-  });
-
-  it('should handle regular expressions with higher precedence than strings', () => {
-    dispatcher.subscribe(/^test$/, ({ params, next }) => next(`${params || ''} first`));
-    dispatcher.subscribe('test', ({ params, next }) => next(`${params || ''} second`));
-
-    return dispatcher.dispatch('test').then((result) => {
-      expect(result.trim()).to.equal('first second');
     });
   });
 

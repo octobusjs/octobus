@@ -1,22 +1,22 @@
 import EventEmitter from 'events';
-import { validateEvent, createOneTimeCallable, compose } from './utils';
+import { createOneTimeCallable, compose } from './utils';
 import HandlersMap from './HandlersMap';
+import Event from './Event';
+
+const delimiter = '.';
 
 export default (options = {}) => {
-  const { delimiter, emitter, middlewares } = {
-    delimiter: '.',
+  const { emitter, middlewares } = {
     emitter: new EventEmitter(),
     middlewares: [],
     ...options,
   };
 
-  const store = {
-    eventsMap: new HandlersMap(),
-    matchersMap: new HandlersMap(),
-  };
+  const handlersMap = new HandlersMap();
+  const matchers = [];
 
   const on = (...args) => emitter.on(...args);
-  const emit = (event, ...args) => emitter.emit(event, ...args.concat([{ dispatch, lookup }]));
+  const emit = (event, ...args) => emitter.emit(`${event}`, ...args.concat([{ dispatch, lookup }]));
   const onBefore = (event, ...args) => on(`before:${event}`, ...args);
   const onAfter = (event, ...args) => on(`after:${event}`, ...args);
   const emitBefore = (event, ...args) => emit(`before:${event}`, ...args);
@@ -24,54 +24,54 @@ export default (options = {}) => {
 
   emitter.on('error', () => {});
 
-  const subscribe = (event, handler, priority) => {
+  const addMatcher = (matcher) => {
+    const existingMatcher = matchers.find((_matcher) => _matcher.toString() === matcher.toString());
+    if (!existingMatcher) {
+      matchers.push(matcher);
+    }
+  };
+
+  const subscribe = (eventIdentifier, handler, priority) => {
+    eventIdentifier = Event.normalize(eventIdentifier); // eslint-disable-line no-param-reassign
+
     if (typeof handler !== 'function') {
       throw new Error(`
-        Event handler for ${event.toString()} has to be a function (got ${typeof handler} instead)!
+        Event handler for ${eventIdentifier} has to be a function (got ${typeof handler} instead)!
       `);
     }
 
-    event = validateEvent(event, delimiter); // eslint-disable-line no-param-reassign
-    const map = event instanceof RegExp ? store.matchersMap : store.eventsMap;
+    addMatcher(eventIdentifier);
 
-    map.add(event, handler, priority);
+    handlersMap.set(eventIdentifier.toString(), handler, priority);
 
-    emit('subscribed', event, handler);
+    emit('subscribed', eventIdentifier, handler);
 
-    return () => unsubscribe(event, handler);
+    return () => unsubscribe(eventIdentifier, handler);
   };
 
   const subscribeMap = (prefix, map) => (
     Object.keys(map).reduce((acc, method) => {
-      const event = `${prefix}${delimiter}${method}`;
+      const eventIdentifier = `${prefix}${delimiter}${method}`;
       const handler = map[method];
-      subscribe(event, handler);
+      subscribe(eventIdentifier, handler);
 
       return Object.assign(acc, {
-        [method]: () => unsubscribe(event, handler),
+        [method]: () => unsubscribe(eventIdentifier, handler),
       });
     }, {})
   );
 
-  const unsubscribe = (event, handler = null) => {
-    store.matchersMap.remove(event, handler);
-    store.eventsMap.remove(event, handler);
-
-    emit('unsubscribed', event, handler);
+  const unsubscribe = (eventIdentifier, handler = null) => {
+    handlersMap.delete(eventIdentifier.toString(), handler);
+    emit('unsubscribed', eventIdentifier, handler);
   };
 
   const runMiddlewares = (...args) => compose(...middlewares.reverse())(...args);
 
-  const dispatch = (event, params, done) => {
+  const dispatch = (eventOrIdentifier, params, done) => {
+    const event = Event.from(eventOrIdentifier);
     const res = runMiddlewares({ event, params });
-    event = validateEvent(res.event, delimiter); // eslint-disable-line no-param-reassign
     params = res.params; // eslint-disable-line no-param-reassign
-
-    if (typeof event !== 'string') {
-      throw new Error(
-        `You can only dispatch events of type string and array (got ${typeof event} instead).`
-      );
-    }
 
     const handlers = getEventHandlersMatching(event);
 
@@ -79,9 +79,9 @@ export default (options = {}) => {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
-    emitBefore(event, { params, dispatch, lookup });
+    emitBefore(event, { params, dispatch, lookup, event });
     return cascadeHandlers(handlers, params, event).then((result) => {
-      emitAfter(event, { params, result, dispatch, lookup });
+      emitAfter(event, { params, result, dispatch, lookup, event });
 
       return done ? done(null, result) : result;
     }, (err) => {
@@ -101,21 +101,14 @@ export default (options = {}) => {
     })
   );
 
-  const getEventHandlersMatching = (event) => {
-    let handlers = [];
-
-    for (const matcher of store.matchersMap.keys()) {
-      if (matcher.test(event)) {
-        handlers.unshift(...store.matchersMap.getByPriority(matcher));
-      }
-    }
-
-    if (store.eventsMap.has(event)) {
-      handlers = handlers.concat(store.eventsMap.getByPriority(event));
-    }
-
-    return handlers;
-  };
+  const getEventHandlersMatching = (event) => (
+    matchers
+      .filter((matcher) => event.isMatch(matcher))
+      .reduce((acc, matcher) => {
+        acc.unshift(...handlersMap.getByPriority(matcher.toString()));
+        return acc;
+      }, [])
+  );
 
   const runHandler = (handler, args) => {
     const { onError, ...restArgs } = args;
