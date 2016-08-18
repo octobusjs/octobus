@@ -163,7 +163,7 @@ export default (options = {}) => {
       event,
       params,
       next,
-      dispatch,
+      dispatch: (...args) => dispatch(Event.from(args[0], event), ...args.slice(1)),
       lookup,
       emit,
       emitBefore,

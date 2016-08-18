@@ -22,16 +22,17 @@ export default class Event {
     return eventIdentifier;
   }
 
-  static from(eventOrIdentifier) {
+  static from(eventOrIdentifier, parent, meta) {
     if (eventOrIdentifier instanceof Event) {
       return eventOrIdentifier;
     }
 
-    return new Event(eventOrIdentifier);
+    return new Event(eventOrIdentifier, parent, meta);
   }
 
-  constructor(identifier, meta = {}) {
+  constructor(identifier, parent, meta = {}) {
     this.identifier = Event.normalize(identifier);
+    this.parent = parent;
     this.meta = meta;
     this.uid = generateUId();
   }
