@@ -407,4 +407,12 @@ describe('createEventDispatcher', () => {
 
     return dispatcher.dispatch('test');
   });
+
+  it('should reference the parent event', () => {
+    dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
+    dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));
+    dispatcher.dispatch('another.test').then((result) => {
+      expect(result).to.equal('another.test');
+    });
+  });
 });
