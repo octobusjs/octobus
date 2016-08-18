@@ -3,23 +3,17 @@ import Joi from 'joi';
 
 const restrictedEvents = ['error', 'subscribe', 'unsubscribe'];
 const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
-const delimiter = '.';
 
 export default class Event {
   static validate(eventIdentifier) {
     Joi.assert(eventIdentifier, Joi.alternatives().try(
       Joi.string().required().regex(validEventPattern).invalid(restrictedEvents),
-      Joi.array().min(1).items(Joi.string().regex(validEventPattern)),
       Joi.object().type(RegExp),
     ).required());
   }
 
   static normalize(eventIdentifier) {
     Event.validate(eventIdentifier);
-
-    if (Array.isArray(eventIdentifier)) {
-      return eventIdentifier.join(delimiter);
-    }
 
     if (typeof eventIdentifier === 'string') {
       return eventIdentifier.trim();
