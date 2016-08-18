@@ -2,6 +2,7 @@ import EventEmitter from 'events';
 import { createOneTimeCallable, compose } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
+import identity from 'lodash/identity';
 
 export default (options = {}) => {
   const { emitter, middlewares } = {
@@ -91,10 +92,10 @@ export default (options = {}) => {
     });
   };
 
-  const lookup = (path) => (
+  const lookup = (path, eventFactory = identity) => (
     new Proxy({}, {
       get(target, methodName) {
-        return (params) => dispatch(`${path}.${methodName}`, params);
+        return (params) => dispatch(eventFactory(`${path}.${methodName}`), params);
       },
     })
   );
@@ -164,7 +165,7 @@ export default (options = {}) => {
       params,
       next,
       dispatch: (...args) => dispatch(Event.from(args[0], event), ...args.slice(1)),
-      lookup,
+      lookup: (path) => lookup(path, (eventIdentifier) => Event.from(eventIdentifier, event)),
       emit,
       emitBefore,
       emitAfter,
