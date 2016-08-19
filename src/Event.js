@@ -24,7 +24,14 @@ export default class Event {
 
   static from(eventOrIdentifier, parent, meta) {
     if (eventOrIdentifier instanceof Event) {
-      return eventOrIdentifier;
+      return {
+        ...eventOrIdentifier,
+        parent,
+        meta: {
+          ...(eventOrIdentifier.meta || {}),
+          ...meta,
+        },
+      };
     }
 
     return new Event(eventOrIdentifier, parent, meta);
