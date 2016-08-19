@@ -81,14 +81,15 @@ export default (options = {}) => {
     emitBefore(event, { params, dispatch, lookup, event });
     return cascadeHandlers(handlers, params, event).then((result) => {
       emitAfter(event, { params, result, dispatch, lookup, event });
-
       return done ? done(null, result) : result;
-    }, (err) => {
+    }, (error) => {
+      emitAfter(event, { params, error, dispatch, lookup, event });
+
       if (done) {
-        return done(err);
+        return done(error);
       }
 
-      throw err;
+      throw error;
     });
   };
 
