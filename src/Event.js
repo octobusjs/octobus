@@ -22,7 +22,7 @@ export default class Event {
     return eventIdentifier;
   }
 
-  static from(eventOrIdentifier, parent, meta) {
+  static from(eventOrIdentifier, parent, meta = {}) {
     if (eventOrIdentifier instanceof Event) {
       return Object.assign(eventOrIdentifier, {
         parent,
