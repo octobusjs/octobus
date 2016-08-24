@@ -1,6 +1,6 @@
 {
   "name": "octobus.js",
-  "version": "0.14.5",
+  "version": "0.14.6",
   "description": "An event dispatcher aimed for AOP.",
   "main": "dist/index.js",
   "scripts": {
