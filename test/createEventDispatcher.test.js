@@ -10,12 +10,17 @@ const {
   withLookups,
   withNamespace,
 } = decorators;
+import EmitterDebug from '../src/EmitterDebug';
 
 describe('createEventDispatcher', () => {
   let dispatcher;
+  let logger;
 
   beforeEach(() => {
-    dispatcher = createEventDispatcher();
+    logger = [];
+    dispatcher = createEventDispatcher({
+      emitter: new EmitterDebug((msg) => logger.push(msg)),
+    });
   });
 
   describe('handling results', () => {
@@ -411,8 +416,10 @@ describe('createEventDispatcher', () => {
   it('should reference the parent event', () => {
     dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
     dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));
-    dispatcher.dispatch('another.test').then((result) => {
+    return dispatcher.dispatch('another.test').then((result) => {
       expect(result).to.equal('another.test');
+      expect(logger[0]).to.match(/^- another.test \[\d+ms\]$/);
+      expect(logger[1]).to.match(/^- - test \[\d+ms\]$/);
     });
   });
 });
