@@ -68,7 +68,8 @@ export default (options = {}) => {
   const runMiddlewares = (...args) => compose(...middlewares.reverse())(...args);
 
   const dispatch = (eventOrIdentifier, params, done) => {
-    const event = Event.from(eventOrIdentifier);
+    const event = eventOrIdentifier instanceof Event ? eventOrIdentifier :
+      new Event(eventOrIdentifier);
     const res = runMiddlewares({ event, params });
     params = res.params; // eslint-disable-line no-param-reassign
 
