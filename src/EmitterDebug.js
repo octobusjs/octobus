@@ -12,6 +12,7 @@ const logEvent = (log, item, level = 1) => {
 
 export default class extends EventEmitter {
   constructor(log = console.log.bind(console)) { // eslint-disable-line no-console
+    super();
     this.log = log;
     this.timetable = {};
   }
