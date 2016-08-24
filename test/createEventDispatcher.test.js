@@ -11,6 +11,7 @@ const {
   withNamespace,
 } = decorators;
 import EmitterDebug from '../src/EmitterDebug';
+import Event from '../src/Event';
 
 describe('createEventDispatcher', () => {
   let dispatcher;
@@ -420,6 +421,14 @@ describe('createEventDispatcher', () => {
       expect(result).to.equal('another.test');
       expect(logger[0]).to.match(/^- another.test \[\d+ms\]$/);
       expect(logger[1]).to.match(/^- - test \[\d+ms\]$/);
+    });
+  });
+
+  it('should handle custom events with meta data', () => {
+    dispatcher.subscribe('test', ({ event }) => event);
+    return dispatcher.dispatch(new Event('test', null, { it: 'works' })).then((result) => {
+      expect(result.uid).to.exist();
+      expect(result.meta.it).to.equal('works');
     });
   });
 });
