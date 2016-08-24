@@ -23,6 +23,7 @@ npm install octobus.js
 
 First you have to create a new instance of an event dispatcher:
 ```javascript
+import { createEventDispatcher } from 'octobus.js';
 const dispatcher = createEventDispatcher();
 ```
 
