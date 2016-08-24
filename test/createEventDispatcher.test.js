@@ -419,6 +419,13 @@ describe('createEventDispatcher', () => {
     dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));
     return dispatcher.dispatch('another.test').then((result) => {
       expect(result).to.equal('another.test');
+    });
+  });
+
+  it('log service calls', () => {
+    dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
+    dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));
+    return dispatcher.dispatch('another.test').then(() => {
       expect(logger[0]).to.match(/^- another.test \[\d+ms\]$/);
       expect(logger[1]).to.match(/^- - test \[\d+ms\]$/);
     });
