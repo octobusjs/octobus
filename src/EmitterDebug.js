@@ -1,7 +1,10 @@
 import EventEmitter from 'events';
 import repeat from 'lodash/repeat';
+import microtime from 'microtime';
 
-const getDuration = ({ start, end }) => end - start;
+const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
+
+const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
 const logEvent = (log, item, level = 1) => {
   log(`${repeat('- ', level)}${item.event.identifier} [${getDuration(item)}ms]`);
@@ -26,11 +29,11 @@ export default class extends EventEmitter {
         this.timetable[event.uid] = {
           event,
           params,
-          start: new Date().getTime(),
+          start: microtime.now(),
           children: [],
         };
       } else {
-        this.timetable[event.uid].end = new Date().getTime();
+        this.timetable[event.uid].end = microtime.now();
 
         if (event.parent) {
           this.timetable[event.parent.uid].children.push(this.timetable[event.uid]);
