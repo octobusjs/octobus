@@ -1,7 +1,7 @@
 import sortBy from 'lodash/sortBy';
 
 export default class HandlersMap extends Map {
-  set(key, handler, priority) {
+  set(key, { handler, priority, filename }) {
     if (!this.has(key)) {
       super.set(key, []);
     }
@@ -10,7 +10,7 @@ export default class HandlersMap extends Map {
       priority = this.getMaxPriority(key) + 1; // eslint-disable-line no-param-reassign
     }
 
-    this.get(key).unshift({ handler, priority });
+    this.get(key).unshift({ handler, priority, filename });
   }
 
   getMaxPriority(key) {
@@ -20,7 +20,7 @@ export default class HandlersMap extends Map {
   }
 
   getByPriority(key) {
-    return sortBy(this.get(key), ({ priority }) => -1 * priority).map(({ handler }) => handler);
+    return sortBy(this.get(key), ({ priority }) => -1 * priority);
   }
 
   delete(key, handler = null) {

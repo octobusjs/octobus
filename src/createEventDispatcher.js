@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { createOneTimeCallable, compose } from './utils';
+import { createOneTimeCallable, compose, getErrorStack } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
 import identity from 'lodash/identity';
@@ -31,7 +31,7 @@ export default (options = {}) => {
   };
 
   const subscribe = (eventIdentifier, handler, priority) => {
-    eventIdentifier = Event.normalize(eventIdentifier); // eslint-disable-line no-param-reassign
+    eventIdentifier = Event.validate(eventIdentifier); // eslint-disable-line no-param-reassign
 
     if (typeof handler !== 'function') {
       throw new Error(`
@@ -41,7 +41,9 @@ export default (options = {}) => {
 
     addMatcher(eventIdentifier);
 
-    handlersMap.set(eventIdentifier.toString(), handler, priority);
+    const filename = getErrorStack()[3];
+
+    handlersMap.set(eventIdentifier.toString(), { handler, priority, filename });
 
     emit('subscribed', eventIdentifier, handler);
 
@@ -156,9 +158,12 @@ export default (options = {}) => {
       return Promise.resolve(params);
     }
 
-    event.selfCalls++; // eslint-disable-line no-param-reassign
+    const { handler, filename } = handlers.shift();
 
-    const handler = handlers.shift();
+    Object.assign(event, {
+      selfCalls: event.selfCalls + 1,
+      subscriptionFilename: filename.trim(),
+    });
 
     const next = (nextParams) => cascadeHandlers(handlers, nextParams, event);
 
