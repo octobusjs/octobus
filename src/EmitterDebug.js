@@ -6,19 +6,25 @@ const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
 
 const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
-const logEvent = (log, item, level = 1) => {
-  const { event } = item;
-  log(`${repeat('- ', level)}${event.identifier}(${event.selfCalls}) [${getDuration(item)}ms]`);
-  item.children.forEach((child) => {
-    logEvent(log, child, level + 1);
-  });
-};
+const fileIndicator = String.fromCharCode('9500');
 
-export default class extends EventEmitter {
-  constructor(log = console.log.bind(console)) { // eslint-disable-line no-console
+export default class EmitterDebug extends EventEmitter {
+  static defaultOptions = {
+    subscriptions: true,
+    params: true,
+  };
+
+  constructor(
+    log = console.log.bind(console),
+    options = {}
+  ) { // eslint-disable-line no-console
     super();
     this.log = log;
     this.timetable = {};
+    this.options = {
+      ...EmitterDebug.defaultOptions,
+      ...options,
+    };
   }
 
   emit(...args) {
@@ -39,7 +45,7 @@ export default class extends EventEmitter {
         if (event.parent) {
           this.timetable[event.parent.uid].children.push(this.timetable[event.uid]);
         } else {
-          logEvent(this.log, this.timetable[event.uid]);
+          this.logEvent(this.timetable[event.uid]);
         }
 
         delete this.timetable[event.uid];
@@ -47,5 +53,27 @@ export default class extends EventEmitter {
     }
 
     return super.emit(...args);
+  }
+
+  logEvent(item, level = 1) {
+    const { event } = item;
+    const { identifier } = event;
+    const callsNr = event.selfCalls.length;
+    this.log(`${repeat('- ', level)}${identifier}(${callsNr}) [${getDuration(item)}ms]`);
+    if (this.options.subscriptions) {
+      event.selfCalls.forEach((selfCall) => {
+        const { params, subscriptionFilename } = selfCall;
+        let msg = `${repeat('  ', level - 1)}  ${fileIndicator} ${subscriptionFilename}`;
+
+        if (this.options.params) {
+          msg += `: ${JSON.stringify(params)}`;
+        }
+
+        this.log(msg);
+      });
+    }
+    item.children.forEach((child) => {
+      this.logEvent(child, level + 1);
+    });
   }
 }
