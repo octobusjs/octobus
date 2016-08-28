@@ -361,18 +361,6 @@ describe('createEventDispatcher', () => {
     });
   });
 
-  xit('should handle multiple regular expressions quite fast', () => {
-    dispatcher.subscribe('test', () => 'it works');
-    for (let i = 0; i < 1000; i++) {
-      dispatcher.subscribe(/test/, ({ next }) => next());
-      dispatcher.subscribe('test', ({ next }) => next());
-    }
-
-    dispatcher.dispatch('test').then((result) => {
-      expect(result).to.equal('it works');
-    });
-  });
-
   it('should convert a function to a handler', () => {
     dispatcher.subscribe('math', withHandler(({ left, right }) => left + right));
     return dispatcher.dispatch('math', { left: 1, right: 2 }).then((result) => {
@@ -426,8 +414,8 @@ describe('createEventDispatcher', () => {
     dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
     dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));
     return dispatcher.dispatch('another.test').then(() => {
-      expect(logger[0]).to.match(/^- another.test \[\d+(\.\d+)?ms\]$/);
-      expect(logger[1]).to.match(/^- - test \[\d+(\.\d+)?ms\]$/);
+      expect(logger[0]).to.match(/^- another.test\(\d+\) \[\d+(\.\d+)?ms\]$/);
+      expect(logger[1]).to.match(/^- - test\(\d+\) \[\d+(\.\d+)?ms\]$/);
     });
   });
 

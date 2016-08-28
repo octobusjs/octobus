@@ -156,6 +156,8 @@ export default (options = {}) => {
       return Promise.resolve(params);
     }
 
+    event.selfCalls++; // eslint-disable-line no-param-reassign
+
     const handler = handlers.shift();
 
     const next = (nextParams) => cascadeHandlers(handlers, nextParams, event);
