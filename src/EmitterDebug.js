@@ -7,7 +7,8 @@ const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
 const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
 const logEvent = (log, item, level = 1) => {
-  log(`${repeat('- ', level)}${item.event.identifier} [${getDuration(item)}ms]`);
+  const { event } = item;
+  log(`${repeat('- ', level)}${event.identifier}(${event.selfCalls}) [${getDuration(item)}ms]`);
   item.children.forEach((child) => {
     logEvent(log, child, level + 1);
   });
