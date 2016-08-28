@@ -15,9 +15,9 @@ export default class EmitterDebug extends EventEmitter {
   };
 
   constructor(
-    log = console.log.bind(console),
+    log = console.log.bind(console), // eslint-disable-line no-console
     options = {}
-  ) { // eslint-disable-line no-console
+  ) {
     super();
     this.log = log;
     this.timetable = {};
