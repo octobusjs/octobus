@@ -6,20 +6,13 @@ const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
 
 export default class Event {
   static validate(eventIdentifier) {
-    Joi.assert(eventIdentifier, Joi.alternatives().try(
-      Joi.string().required().regex(validEventPattern).invalid(restrictedEvents),
-      Joi.object().type(RegExp),
-    ).required());
-  }
-
-  static normalize(eventIdentifier) {
-    Event.validate(eventIdentifier);
-
-    if (typeof eventIdentifier === 'string') {
-      return eventIdentifier.trim();
-    }
-
-    return eventIdentifier;
+    return Joi.attempt(
+      eventIdentifier,
+      Joi.alternatives().try(
+        Joi.string().trim().required().regex(validEventPattern).invalid(restrictedEvents),
+        Joi.object().type(RegExp),
+      ).required()
+    );
   }
 
   static from(eventOrIdentifier, parent, meta = {}) {
@@ -37,7 +30,7 @@ export default class Event {
   }
 
   constructor(identifier, parent, meta = {}) {
-    this.identifier = Event.normalize(identifier);
+    this.identifier = Event.validate(identifier);
     this.parent = parent;
     this.meta = meta;
     this.uid = generateUId();

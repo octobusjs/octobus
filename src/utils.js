@@ -30,3 +30,5 @@ export const compose = (...funcs) => {
 };
 
 export const generateUId = () => shortid.generate();
+
+export const getErrorStack = () => (new Error()).stack.toString().split(/\r\n|\n/);
