@@ -159,9 +159,8 @@ export default (options = {}) => {
     }
 
     const { handler, filename } = handlers.shift();
-
-    Object.assign(event, {
-      selfCalls: event.selfCalls + 1,
+    event.selfCalls.push({
+      params,
       subscriptionFilename: filename.trim(),
     });
 

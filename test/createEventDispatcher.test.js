@@ -411,12 +411,18 @@ describe('createEventDispatcher', () => {
   });
 
   it('log service calls', () => {
+    dispatcher.subscribe('another.test', ({ next }) => next({ first: 1 }), 1000);
     dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
-    dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));
+    dispatcher.subscribe('another.test', ({ next }) => next(), 9);
+    dispatcher.subscribe('another.test',
+      ({ dispatch, params }) => dispatch('test', { ...params, third: 3 }), 10
+    );
+    dispatcher.subscribe('another.test', ({ next, params }) => next({ ...params, second: 2 }), 100);
 
-    return dispatcher.dispatch('another.test').then(() => {
-      expect(logger[0]).to.match(/^- another.test\(\d+\) \[\d+(\.\d+)?ms\]$/);
-      expect(logger[1]).to.match(/^- - test\(\d+\) \[\d+(\.\d+)?ms\]$/);
+
+    return dispatcher.dispatch('another.test', {}).then(() => {
+      expect(logger[0]).to.match(/^- another.test\(3\) \[\d+(\.\d+)?ms\]$/);
+      expect(logger[4]).to.match(/^- - test\(1\) \[\d+(\.\d+)?ms\]$/);
     });
   });
 

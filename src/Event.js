@@ -34,7 +34,7 @@ export default class Event {
     this.parent = parent;
     this.meta = meta;
     this.uid = generateUId();
-    this.selfCalls = 0;
+    this.selfCalls = [];
   }
 
   toString() {
