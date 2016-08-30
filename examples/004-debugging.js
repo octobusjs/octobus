@@ -1,4 +1,4 @@
-import { createEventDispatcher, EmitterDebug } from 'octobus.js';
+import { createEventDispatcher, EmitterDebug } from '../src';
 
 const dispatcher = createEventDispatcher({
   emitter: new EmitterDebug(),
