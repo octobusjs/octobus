@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
-import { createEventDispatcher, decorators } from '../src';
+import { decorators } from '../src';
+import Octobus from '../src';
 import assert from 'assert';
 
-const { subscribe, dispatch } = createEventDispatcher();
+const { subscribe, dispatch } = new Octobus();
 const { withHandler, withDefaultParams } = decorators;
 
 subscribe('math.sum', withHandler(({ left, right }) => left + right));

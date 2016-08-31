@@ -1,6 +1,6 @@
-import { createEventDispatcher, Event } from '../src';
+import Octobus, { Event } from '../src';
 
-const dispatcher = createEventDispatcher();
+const dispatcher = new Octobus();
 
 dispatcher.subscribe(/createOne$/, ({ event }) => {
   if (event.meta.userId) {

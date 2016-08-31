@@ -1,8 +1,6 @@
-import { createEventDispatcher, EmitterDebug } from '../src';
+import { OctobusLogger } from '../src';
 
-const dispatcher = createEventDispatcher({
-  emitter: new EmitterDebug(),
-});
+const dispatcher = new OctobusLogger();
 
 dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
 dispatcher.subscribe('another.test', ({ dispatch }) => dispatch('test'));

@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import Octobus from './Octobus';
 import repeat from 'lodash/repeat';
 import microtime from 'microtime';
 
@@ -8,23 +8,21 @@ const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
 const fileIndicator = String.fromCharCode('9500');
 
-export default class EmitterDebug extends EventEmitter {
+export default class OctobusLogger extends Octobus {
   static defaultOptions = {
-    subscriptions: true,
-    params: true,
+    ...Octobus.defaultOptions,
+    log: console.log.bind(console), // eslint-disable-line no-console
+    logSubscriptions: true,
+    logParams: true,
   };
 
-  constructor(
-    log = console.log.bind(console), // eslint-disable-line no-console
-    options = {}
-  ) {
-    super();
-    this.log = log;
-    this.timetable = {};
-    this.options = {
-      ...EmitterDebug.defaultOptions,
+  constructor(options = {}) {
+    super({
+      ...OctobusLogger.defaultOptions,
       ...options,
-    };
+    });
+
+    this.timetable = {};
   }
 
   emit(...args) {
@@ -59,17 +57,17 @@ export default class EmitterDebug extends EventEmitter {
     const { event } = item;
     const { identifier } = event;
     const callsNr = event.selfCalls.length;
-    this.log(`${repeat('- ', level)}${identifier}(${callsNr}) [${getDuration(item)}ms]`);
-    if (this.options.subscriptions) {
+    this.options.log(`${repeat('- ', level)}${identifier}(${callsNr}) [${getDuration(item)}ms]`);
+    if (this.options.logSubscriptions) {
       event.selfCalls.forEach((selfCall) => {
         const { params, subscriptionFilename } = selfCall;
         let msg = `${repeat('  ', level - 1)}  ${fileIndicator} ${subscriptionFilename}`;
 
-        if (this.options.params) {
+        if (this.options.logParams) {
           msg += `: ${JSON.stringify(params)}`;
         }
 
-        this.log(msg);
+        this.options.log(msg);
       });
     }
     item.children.forEach((child) => {
