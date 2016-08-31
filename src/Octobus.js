@@ -18,6 +18,7 @@ export default class Octobus extends EventEmitter {
     };
     this.handlersMap = new HandlersMap();
     this.matchers = [];
+    this.regExpMatchers = [];
 
     [
       'dispatch', 'subscribe', 'subscribeMap', 'unsubscribe', 'lookup',
@@ -107,20 +108,45 @@ export default class Octobus extends EventEmitter {
     return compose(...this.options.middlewares.reverse())(...args);
   }
 
-  addMatcher(matcher) {
-    const existingMatcher = this.matchers.find((m) => m.toString() === matcher.toString());
-    if (!existingMatcher) {
-      this.matchers.push(matcher);
+  addMatcher(rawMatcher) {
+    const matcher = rawMatcher.toString();
+    if (this.matchers.includes(matcher)) {
+      return;
+    }
+
+    this.matchers.push(matcher);
+
+    if (rawMatcher instanceof RegExp) {
+      this.regExpMatchers.push(rawMatcher);
     }
   }
 
-  getEventHandlersMatching(event) {
-    return this.matchers
-      .filter((matcher) => event.isMatch(matcher))
-      .reduce((acc, matcher) => {
-        acc.unshift(...this.handlersMap.getByPriority(matcher.toString()));
-        return acc;
-      }, []);
+  getEventHandlersMatching(rawEvent) {
+    const event = rawEvent.toString();
+    const matchers = [];
+
+    if (this.matchers.includes(event)) {
+      matchers.push(event);
+    }
+
+    if (rawEvent.identifier instanceof RegExp) {
+      matchers.push(
+        ...this.matchers.filter((matcher) => (
+          (matcher !== event) && rawEvent.identifier.test(matcher)
+        ))
+      );
+    } else {
+      matchers.push(
+        ...this.regExpMatchers.filter((rMatcher) => (
+          (rMatcher.toString() !== event) && rMatcher.test(event)
+        ))
+      );
+    }
+
+    return matchers.reduce((acc, matcher) => {
+      acc.unshift(...this.handlersMap.getByPriority(matcher.toString()));
+      return acc;
+    }, []);
   }
 
   cascadeHandlers(handlers, params, event) {

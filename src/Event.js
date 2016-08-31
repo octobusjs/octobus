@@ -40,16 +40,4 @@ export default class Event {
   toString() {
     return this.identifier.toString();
   }
-
-  isMatch(matcher) {
-    if (this.identifier instanceof RegExp && (typeof matcher === 'string')) {
-      return this.identifier.test(matcher);
-    }
-
-    if (matcher instanceof RegExp && (typeof this.identifier === 'string')) {
-      return matcher.test(this.identifier);
-    }
-
-    return this.toString() === matcher.toString();
-  }
 }
