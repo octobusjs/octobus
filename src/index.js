@@ -1,5 +1,11 @@
-export createEventDispatcher from './createEventDispatcher';
+import Octobus from './Octobus';
+import OctobusLogger from './OctobusLogger';
 import * as decorators from './decorators';
 import Event from './Event';
-import EmitterDebug from './EmitterDebug';
-export { decorators, Event, EmitterDebug };
+
+export {
+  Octobus as default,
+  OctobusLogger,
+  decorators,
+  Event,
+};

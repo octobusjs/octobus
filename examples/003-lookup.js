@@ -1,6 +1,6 @@
-import { createEventDispatcher } from '../src';
+import Octobus from '../src';
 
-const { subscribe, lookup } = createEventDispatcher();
+const { subscribe, lookup } = new Octobus();
 
 subscribe('say.hello', ({ params }) => `Hello ${params}!`);
 subscribe('say.goodbye', ({ params }) => `Goodbye ${params}!`);

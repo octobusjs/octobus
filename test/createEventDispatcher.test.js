@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { createEventDispatcher, decorators } from '../src';
+import { OctobusLogger, decorators } from '../src';
 const {
   withDefaultParams,
   withSchema,
@@ -10,7 +10,6 @@ const {
   withLookups,
   withNamespace,
 } = decorators;
-import EmitterDebug from '../src/EmitterDebug';
 import Event from '../src/Event';
 
 describe('createEventDispatcher', () => {
@@ -19,8 +18,8 @@ describe('createEventDispatcher', () => {
 
   beforeEach(() => {
     logger = [];
-    dispatcher = createEventDispatcher({
-      emitter: new EmitterDebug((msg) => logger.push(msg)),
+    dispatcher = new OctobusLogger({
+      log: (msg) => logger.push(msg),
     });
   });
 

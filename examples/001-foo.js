@@ -1,6 +1,6 @@
-import { createEventDispatcher } from '../src';
+import Octobus from '../src';
 
-const { subscribe, dispatch } = createEventDispatcher();
+const { subscribe, dispatch } = new Octobus();
 
 subscribe('foo', () => 'bar');
 
