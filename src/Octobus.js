@@ -3,6 +3,7 @@ import { compose, getErrorStack, runHandler } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
 import identity from 'lodash/identity';
+import sortBy from 'lodash/sortBy';
 
 export default class Octobus extends EventEmitter {
   static defaultOptions = {
@@ -63,9 +64,24 @@ export default class Octobus extends EventEmitter {
     }, {});
   }
 
-  unsubscribe(eventIdentifier, handler = null) {
-    this.handlersMap.delete(eventIdentifier.toString(), handler);
-    this.emit('unsubscribed', eventIdentifier, handler);
+  unsubscribe(eventOrIdentifier, handler = null) {
+    const event = eventOrIdentifier.toString();
+
+    this.handlersMap.delete(event, handler);
+
+    if (!handler) {
+      const rIndex = this.regExpMatchers.findIndex((m) => m.toString() === event);
+      if (rIndex > -1) {
+        this.regExpMatchers.splice(rIndex, 1);
+      }
+
+      const sIndex = this.matchers.findIndex((m) => m === event);
+      if (sIndex > -1) {
+        this.matchers.splice(sIndex, 1);
+      }
+    }
+
+    this.emit('unsubscribed', eventOrIdentifier, handler);
   }
 
   dispatch(eventOrIdentifier, params, done) {
@@ -110,14 +126,17 @@ export default class Octobus extends EventEmitter {
 
   addMatcher(rawMatcher) {
     const matcher = rawMatcher.toString();
-    if (this.matchers.includes(matcher)) {
+
+    if (rawMatcher instanceof RegExp) {
+      const existingMatcher = this.regExpMatchers.find((m) => m.toString() === matcher);
+      if (!existingMatcher) {
+        this.regExpMatchers.push(rawMatcher);
+      }
       return;
     }
 
-    this.matchers.push(matcher);
-
-    if (rawMatcher instanceof RegExp) {
-      this.regExpMatchers.push(rawMatcher);
+    if (!this.matchers.includes(matcher)) {
+      this.matchers.push(matcher);
     }
   }
 
@@ -125,28 +144,26 @@ export default class Octobus extends EventEmitter {
     const event = rawEvent.toString();
     const matchers = [];
 
-    if (this.matchers.includes(event)) {
-      matchers.push(event);
-    }
-
     if (rawEvent.identifier instanceof RegExp) {
       matchers.push(
-        ...this.matchers.filter((matcher) => (
-          (matcher !== event) && rawEvent.identifier.test(matcher)
-        ))
+        ...this.matchers.filter((matcher) => rawEvent.identifier.test(matcher))
       );
     } else {
+      if (this.matchers.includes(event)) {
+        matchers.push(event);
+      }
+
       matchers.push(
-        ...this.regExpMatchers.filter((rMatcher) => (
-          (rMatcher.toString() !== event) && rMatcher.test(event)
-        ))
+        ...this.regExpMatchers.filter((rMatcher) => rMatcher.test(event))
       );
     }
 
-    return matchers.reduce((acc, matcher) => {
-      acc.unshift(...this.handlersMap.getByPriority(matcher.toString()));
+    const handlers = matchers.reduce((acc, matcher) => {
+      acc.unshift(...this.handlersMap.get(matcher.toString()));
       return acc;
     }, []);
+
+    return sortBy(handlers, ({ priority }) => -1 * priority);
   }
 
   cascadeHandlers(handlers, params, event) {
