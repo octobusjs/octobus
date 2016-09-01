@@ -43,7 +43,7 @@ export default class OctobusLogger extends Octobus {
         if (event.parent) {
           this.timetable[event.parent.uid].children.push(this.timetable[event.uid]);
         } else {
-          this.logEvent(this.timetable[event.uid]);
+          this.logItem(this.timetable[event.uid]);
         }
 
         delete this.timetable[event.uid];
@@ -53,7 +53,7 @@ export default class OctobusLogger extends Octobus {
     return super.emit(...args);
   }
 
-  logEvent(item, level = 1) {
+  logItem(item, level = 1) {
     const { event } = item;
     const { identifier } = event;
     const callsNr = event.selfCalls.length;
@@ -71,7 +71,7 @@ export default class OctobusLogger extends Octobus {
       });
     }
     item.children.forEach((child) => {
-      this.logEvent(child, level + 1);
+      this.logItem(child, level + 1);
     });
   }
 }

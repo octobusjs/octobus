@@ -141,29 +141,27 @@ export default class Octobus extends EventEmitter {
   }
 
   cascadeHandlers(handlers, params, event) {
-    if (!handlers.length) {
-      return Promise.resolve(params);
-    }
-
     const { handler, filename } = handlers.shift();
+
     event.selfCalls.push({
       params,
       subscriptionFilename: filename.trim(),
     });
 
-    const next = (nextParams) => this.cascadeHandlers(handlers, nextParams, event);
-
-    const onError = (err) => this.emit('error', err);
-
-    return runHandler(handler, {
+    const handlerArgs = {
       event,
       params,
-      next,
       dispatch: (...args) => this.dispatch(Event.from(args[0], event), ...args.slice(1)),
       lookup: (path) => this.lookup(path, (eventIdentifier) => Event.from(eventIdentifier, event)),
-      onError,
+      onError: (err) => this.emit('error', err),
       ...this.getAPI('emit', 'emitBefore', 'emitAfter'),
-    });
+    };
+
+    if (handlers.length) {
+      handlerArgs.next = (nextParams) => this.cascadeHandlers(handlers, nextParams, event);
+    }
+
+    return runHandler(handler, handlerArgs);
   }
 
   emit(event, ...args) {
