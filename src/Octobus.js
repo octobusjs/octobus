@@ -129,14 +129,15 @@ export default class Octobus extends EventEmitter {
     return compose(...this.options.middlewares.reverse())(...args);
   }
 
-  addMatcher(rawMatcher) {
-    const matcher = rawMatcher.toString();
+  addMatcher(matcher) {
+    if (!(matcher instanceof RegExp)) {
+      return;
+    }
 
-    if (rawMatcher instanceof RegExp) {
-      const existingMatcher = this.matchers.find((m) => m.toString() === matcher);
-      if (!existingMatcher) {
-        this.matchers.push(rawMatcher);
-      }
+    const existingMatcher = this.matchers.find((m) => m.toString() === matcher.toString());
+
+    if (!existingMatcher) {
+      this.matchers.push(matcher);
     }
   }
 
