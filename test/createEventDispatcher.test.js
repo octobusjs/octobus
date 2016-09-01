@@ -432,4 +432,15 @@ describe('createEventDispatcher', () => {
       expect(result.meta.it).to.equal('works');
     });
   });
+
+  xit('stress test', () => {
+    for (let i = 0; i < 2000; i++) {
+      dispatcher.subscribe(`test${i}`, ({ dispatch }) => dispatch(`test${i + 1}`));
+    }
+    dispatcher.subscribe('test1000', () => 'it works');
+
+    return dispatcher.dispatch('test0').then((result) => {
+      expect(result).to.equal('it works');
+    });
+  });
 });

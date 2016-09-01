@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { compose, getErrorStack, runHandler } from './utils';
+import { getErrorStack, runHandler } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
 import identity from 'lodash/identity';
@@ -7,17 +7,9 @@ import sortBy from 'lodash/sortBy';
 import Joi from 'joi';
 
 export default class Octobus extends EventEmitter {
-  static defaultOptions = {
-    middlewares: [],
-  };
-
-  constructor(options = {}) {
+  constructor() {
     super();
 
-    this.options = {
-      ...Octobus.defaultOptions,
-      ...options,
-    };
     this.handlersMap = new HandlersMap();
     this.matchers = [];
 
@@ -92,8 +84,6 @@ export default class Octobus extends EventEmitter {
   dispatch(eventOrIdentifier, params, done) {
     const event = eventOrIdentifier instanceof Event ? eventOrIdentifier :
       new Event(eventOrIdentifier);
-    const res = this.runMiddlewares({ event, params });
-    params = res.params; // eslint-disable-line no-param-reassign
 
     const handlers = this.getEventHandlersMatching(event);
 
@@ -123,10 +113,6 @@ export default class Octobus extends EventEmitter {
         return (params) => dispatch(eventFactory(`${path}.${methodName}`), params);
       },
     });
-  }
-
-  runMiddlewares(...args) {
-    return compose(...this.options.middlewares.reverse())(...args);
   }
 
   addMatcher(matcher) {
