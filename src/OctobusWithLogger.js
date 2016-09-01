@@ -6,21 +6,21 @@ const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
 
 const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
-const fileIndicator = String.fromCharCode('9500');
+const fileIndicator = String.fromCharCode(9500);
 
 export default class OctobusLogger extends Octobus {
   static defaultOptions = {
-    ...Octobus.defaultOptions,
     log: console.log.bind(console), // eslint-disable-line no-console
     logSubscriptions: true,
     logParams: true,
   };
 
   constructor(options = {}) {
-    super({
+    super();
+    this.options = {
       ...OctobusLogger.defaultOptions,
       ...options,
-    });
+    };
 
     this.timetable = {};
   }
