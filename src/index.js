@@ -1,11 +1,11 @@
 import Octobus from './Octobus';
-import OctobusLogger from './OctobusLogger';
+import OctobusWithLogger from './OctobusWithLogger';
 import * as decorators from './decorators';
 import Event from './Event';
 
 export {
   Octobus as default,
-  OctobusLogger,
+  OctobusWithLogger,
   decorators,
   Event,
 };
