@@ -4,6 +4,7 @@ import HandlersMap from './HandlersMap';
 import Event from './Event';
 import identity from 'lodash/identity';
 import sortBy from 'lodash/sortBy';
+import Joi from 'joi';
 
 export default class Octobus extends EventEmitter {
   static defaultOptions = {
@@ -19,7 +20,6 @@ export default class Octobus extends EventEmitter {
     };
     this.handlersMap = new HandlersMap();
     this.matchers = [];
-    this.regExpMatchers = [];
 
     [
       'dispatch', 'subscribe', 'subscribeMap', 'unsubscribe', 'lookup',
@@ -31,8 +31,18 @@ export default class Octobus extends EventEmitter {
     this.on('error', () => {});
   }
 
-  subscribe(eventIdentifier, handler, priority) {
-    eventIdentifier = Event.validate(eventIdentifier); // eslint-disable-line no-param-reassign
+  validateSubscription(eventIdentifier) {
+    return Joi.attempt(
+      eventIdentifier,
+      Joi.alternatives().try(
+        Event.validator,
+        Joi.object().type(RegExp),
+      ).required()
+    );
+  }
+
+  subscribe(rawEventIdentifier, handler, priority) {
+    const eventIdentifier = this.validateSubscription(rawEventIdentifier);
 
     if (typeof handler !== 'function') {
       throw new Error(`
@@ -70,14 +80,9 @@ export default class Octobus extends EventEmitter {
     this.handlersMap.delete(event, handler);
 
     if (!handler) {
-      const rIndex = this.regExpMatchers.findIndex((m) => m.toString() === event);
-      if (rIndex > -1) {
-        this.regExpMatchers.splice(rIndex, 1);
-      }
-
-      const sIndex = this.matchers.findIndex((m) => m === event);
-      if (sIndex > -1) {
-        this.matchers.splice(sIndex, 1);
+      const matcherIndex = this.matchers.findIndex((m) => m.toString() === event);
+      if (matcherIndex > -1) {
+        this.matchers.splice(matcherIndex, 1);
       }
     }
 
@@ -128,40 +133,22 @@ export default class Octobus extends EventEmitter {
     const matcher = rawMatcher.toString();
 
     if (rawMatcher instanceof RegExp) {
-      const existingMatcher = this.regExpMatchers.find((m) => m.toString() === matcher);
+      const existingMatcher = this.matchers.find((m) => m.toString() === matcher);
       if (!existingMatcher) {
-        this.regExpMatchers.push(rawMatcher);
+        this.matchers.push(rawMatcher);
       }
-      return;
-    }
-
-    if (!this.matchers.includes(matcher)) {
-      this.matchers.push(matcher);
     }
   }
 
   getEventHandlersMatching(rawEvent) {
     const event = rawEvent.toString();
-    const matchers = [];
 
-    if (rawEvent.identifier instanceof RegExp) {
-      matchers.push(
-        ...this.matchers.filter((matcher) => rawEvent.identifier.test(matcher))
-      );
-    } else {
-      if (this.matchers.includes(event)) {
-        matchers.push(event);
-      }
-
-      matchers.push(
-        ...this.regExpMatchers.filter((rMatcher) => rMatcher.test(event))
-      );
-    }
-
-    const handlers = matchers.reduce((acc, matcher) => {
-      acc.unshift(...this.handlersMap.get(matcher.toString()));
-      return acc;
-    }, []);
+    const handlers = this.matchers
+      .filter((matcher) => matcher.test(event))
+      .reduce((acc, matcher) => {
+        acc.unshift(...this.handlersMap.get(matcher.toString()));
+        return acc;
+      }, this.handlersMap.get(event) || []);
 
     return sortBy(handlers, ({ priority }) => -1 * priority);
   }

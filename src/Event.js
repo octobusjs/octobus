@@ -5,14 +5,11 @@ const restrictedEvents = ['error', 'subscribe', 'unsubscribe'];
 const validEventPattern = /^([A-Za-z0-9]+\.?)+$/;
 
 export default class Event {
+  static validator =
+    Joi.string().trim().regex(validEventPattern).invalid(restrictedEvents).required();
+
   static validate(eventIdentifier) {
-    return Joi.attempt(
-      eventIdentifier,
-      Joi.alternatives().try(
-        Joi.string().trim().required().regex(validEventPattern).invalid(restrictedEvents),
-        Joi.object().type(RegExp),
-      ).required()
-    );
+    return Joi.attempt(eventIdentifier, Event.validator);
   }
 
   static from(eventOrIdentifier, parent, meta = {}) {
