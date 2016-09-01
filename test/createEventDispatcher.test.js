@@ -249,7 +249,9 @@ describe('createEventDispatcher', () => {
 
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 3`), 101);
 
-    dispatcher.subscribe('test', ({ next, params }) => next(`${params} 5`), 5);
+    dispatcher.subscribe('test',
+      ({ next, params }) => (next ? next(`${params} 5`) : `${params} 5`), 5
+    );
 
     dispatcher.subscribe('test', ({ next, params }) => next(`${params} 2`), 1000);
 
