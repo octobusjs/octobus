@@ -51,7 +51,8 @@ dispatcher.dispatch('foo', 'world', (err, result) => {
 });
 ```
 
-Things are getting better when you start to leverage the new features ES6 provides (promises, async / await, arrow functions etc.):
+Things are getting better when you start to leverage the new features ES6 provides (promises, async / await, arrow functions etc.).
+
 The same functionality from above can be written like this:
 
 ```javascript
