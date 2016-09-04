@@ -91,12 +91,12 @@ export default class Octobus extends EventEmitter {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
-    this.emitBefore(event, { params, event, ...this.getAPI('dispatch', 'lookup') });
+    this.emitBefore(event, { params, event });
     return this.cascadeHandlers(handlers, params, event).then((result) => {
-      this.emitAfter(event, { params, result, event, ...this.getAPI('dispatch', 'lookup') });
+      this.emitAfter(event, { params, result, event });
       return done ? done(null, result) : result;
     }, (error) => {
-      this.emitAfter(event, { params, error, event, ...this.getAPI('dispatch', 'lookup') });
+      this.emitAfter(event, { params, error, event });
 
       if (done) {
         return done(error);
@@ -176,12 +176,16 @@ export default class Octobus extends EventEmitter {
     return this.on(`after:${event}`, ...args);
   }
 
-  emitBefore(event, ...args) {
-    return this.emit(`before:${event}`, ...args);
+  emitBefore(event, args, ...restArgs) {
+    return this.emit(
+      `before:${event}`, { ...args, ...this.getAPI('dispatch', 'lookup') }, ...restArgs
+    );
   }
 
-  emitAfter(event, ...args) {
-    return this.emit(`after:${event}`, ...args);
+  emitAfter(event, args, ...restArgs) {
+    return this.emit(
+      `after:${event}`, { ...args, ...this.getAPI('dispatch', 'lookup') }, ...restArgs
+    );
   }
 
   getAPI(...methods) {
