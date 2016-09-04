@@ -23,7 +23,8 @@ Key principles:
 Requirements:
 - octobus.js requires node 6 because of its Proxy use
 
-How to use it:
+# How to use it:
+
 1) First you need to create a shareable instance of Octobus. You'll use it whenever you want to call a previously defined service.
 It's up to you how to name it, but here are some suggestions: dispatcher, eventDispatcher, eventBus, serviceLocator etc.
 
