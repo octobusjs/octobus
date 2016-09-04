@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import Octobus from '../src';
 
 const { subscribe, lookup } = new Octobus();
