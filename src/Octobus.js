@@ -165,7 +165,7 @@ export default class Octobus extends EventEmitter {
   }
 
   emit(event, ...args) {
-    return super.emit(event.toString(), ...args.concat([this.getAPI('dispatch', 'lookup')]));
+    return super.emit(event.toString(), ...args);
   }
 
   onBefore(event, ...args) {
