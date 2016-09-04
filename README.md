@@ -5,7 +5,7 @@
 
 Octobus is a javascript library that helps you keep your code modular by creating services that communicate with each other through well-defined messages.
 
-# Install
+## Install
 
 ```
 npm install octobus.js
@@ -13,7 +13,7 @@ npm install octobus.js
 
 It is built on top of node's EventEmitter and it respects the open / closed principle.
 
-Key principles:
+## Key principles:
 - functions with named arguments are preferred to functions with positional arguments
 - promises are better than callbacks (they help you get rid of callback hell)
 - async / await calls are better than promises alone and will make you code more readable and manageable
@@ -23,7 +23,7 @@ Key principles:
 Requirements:
 - octobus.js requires node 6 because of its Proxy use
 
-# How to use it:
+## How to use it:
 
 1) First you need to create a shareable instance of Octobus. You'll use it whenever you want to call a previously defined service.
 It's up to you how to name it, but here are some suggestions: dispatcher, eventDispatcher, eventBus, serviceLocator etc.
@@ -64,7 +64,7 @@ dispatch('foo', 'world').then((result) => {
 });
 ```
 
-# Extensions
+## Extensions
 
 - https://github.com/viczam/octobus-mongodb
 - https://github.com/viczam/hapi-octobus
