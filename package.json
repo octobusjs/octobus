@@ -18,9 +18,9 @@
   },
   "keywords": [
     "AOP",
-    "events",
-    "event",
-    "emitter",
+    "event bus",
+    "event dispatcher",
+    "EventEmitter",
     "microservices"
   ],
   "files": [
