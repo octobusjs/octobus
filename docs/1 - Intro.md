@@ -22,14 +22,14 @@ const cpm = (cost, impressions) => (cost / impressions) * 1000;
 
 If you are like me, you'll always forget the position of the parameters (does the cost come first?).
 
-PHP knows it better - http://phpsadness.com/sad/9 - positional parameters suck, let's simulate named parameters:
+PHP knows it better - http://phpsadness.com/sad/9 - positional parameters suck, so let's simulate named parameters:
 
 ```js
 const cpm = ({ cost, impressions }) => (cost / impressions) * 1000;
 ```
 
 Cool, now let's say you published a library featuring your CPM calculator. But someone using it realizes he's getting infinite CPMs. It happens when you have 0 impressions - the CPM should be 0 too.
-He has to wrap your function and change all the calls to your function with his wrapped func:
+He has to wrap your function and change all the calls to your function with his wrapped function:
 
 
 ```js
@@ -38,7 +38,7 @@ import { cpm } from 'cpm-calculator';
 export default ({ cost, impressions }) => impressions === 0 ? 0 : cpm({ cost, impressions });
 ```
 
-He realizes there's more than that. The cost and impressions can't be negative numbers, while the impressions nr has to be a natural number.
+He realizes there's more than that. The cost and impressions can't be negative numbers, while the impressions number has to be a natural number.
 But... you already worked hard on replacing the initial cpm calls with your version where you guard for 0 impressions.
 
 Let's try to do some of that using octobus.js.
@@ -46,7 +46,8 @@ Let's try to do some of that using octobus.js.
 First we need a dispatcher instance:
 
 ```js
-const dispatcher = createEventDispatcher();
+import Octobus from 'octobus.js';
+const dispatcher = new Octobus();
 const { dispatch, subscribe } = dispatcher;
 ```
 
@@ -108,7 +109,7 @@ Some good examples:
 - `math.sum`
 - `entity.User.findOne`
 
-Now let's say you want to get 0 as a result when the impressions nr is 0. You can overwrite the previously defined service by creating another one with the same name:
+Now let's say you want to get 0 as a result when the impressions number is 0. You can overwrite the previously defined service by creating another one with the same name:
 
 ```js
 subscribe('calculator.cpm', ({ params: { cost, impressions } }) => impressions === 0 ? 0 : (cost / impressions) * 1000);
@@ -133,6 +134,6 @@ import { decorators } from 'octobus.js';
 
 const { withHandler } = decorators;
 
-// same thing as before
+// same as above
 subscribe('calculator.cpm', withHandler(handler));
 ```
