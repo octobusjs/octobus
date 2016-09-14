@@ -10,6 +10,8 @@ export default class Octobus extends EventEmitter {
   constructor() {
     super();
 
+    this.setMaxListeners(Infinity);
+
     this.handlersMap = new HandlersMap();
     this.matchers = [];
 
@@ -81,7 +83,7 @@ export default class Octobus extends EventEmitter {
     this.emit('unsubscribed', eventOrIdentifier, handler);
   }
 
-  dispatch(eventOrIdentifier, params, done) {
+  dispatch(eventOrIdentifier, params) {
     const event = eventOrIdentifier instanceof Event ? eventOrIdentifier :
       new Event(eventOrIdentifier);
 
@@ -94,16 +96,28 @@ export default class Octobus extends EventEmitter {
     this.emitBefore(event, { params, event });
     return this.cascadeHandlers(handlers, params, event).then((result) => {
       this.emitAfter(event, { params, result, event });
-      return done ? done(null, result) : result;
+      return result;
     }, (error) => {
       this.emitAfter(event, { params, error, event });
-
-      if (done) {
-        return done(error);
-      }
-
       throw error;
     });
+  }
+
+  publish(eventOrIdentifier, params) {
+    const event = eventOrIdentifier instanceof Event ? eventOrIdentifier :
+      new Event(eventOrIdentifier);
+
+    const handlers = this.getEventHandlersMatching(event);
+
+    if (!handlers.length) {
+      return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
+    }
+
+    return Promise.all(
+      handlers.map(
+        ({ handler }) => runHandler(handler, this.buildHandlerArgs({ event, params }))
+      )
+    );
   }
 
   lookup(path, eventFactory = identity) {
@@ -140,6 +154,19 @@ export default class Octobus extends EventEmitter {
     return sortBy(handlers, ({ priority }) => -1 * priority);
   }
 
+  buildHandlerArgs({
+    params, event,
+  }) {
+    return {
+      event,
+      params,
+      dispatch: (...args) => this.dispatch(Event.from(args[0], event), ...args.slice(1)),
+      lookup: (path) => this.lookup(path, (eventIdentifier) => Event.from(eventIdentifier, event)),
+      onError: (err) => this.emit('error', err),
+      ...this.getAPI('emit', 'emitBefore', 'emitAfter'),
+    };
+  }
+
   cascadeHandlers(handlers, params, event) {
     const { handler, filename } = handlers.shift();
 
@@ -148,20 +175,12 @@ export default class Octobus extends EventEmitter {
       subscriptionFilename: filename.trim(),
     });
 
-    const handlerArgs = {
-      event,
-      params,
-      dispatch: (...args) => this.dispatch(Event.from(args[0], event), ...args.slice(1)),
-      lookup: (path) => this.lookup(path, (eventIdentifier) => Event.from(eventIdentifier, event)),
-      onError: (err) => this.emit('error', err),
-      ...this.getAPI('emit', 'emitBefore', 'emitAfter'),
-    };
-
-    if (handlers.length) {
-      handlerArgs.next = (nextParams) => this.cascadeHandlers(handlers, nextParams, event);
-    }
-
-    return runHandler(handler, handlerArgs);
+    return runHandler(handler, {
+      ...this.buildHandlerArgs({ params, event }),
+      next: handlers.length ?
+        (nextParams) => this.cascadeHandlers(handlers, nextParams, event) :
+        undefined,
+    });
   }
 
   emit(event, ...args) {
