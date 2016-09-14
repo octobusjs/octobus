@@ -409,32 +409,6 @@ describe('Octobus', () => {
     });
   });
 
-  describe('using callbacks', () => {
-    it('when handling the dispatch result', (done) => {
-      dispatcher.subscribe('test', () => 'it works');
-
-      dispatcher.dispatch('test', {}, (err, result) => {
-        expect(err).toBeNull();
-        expect(result).toBe('it works');
-        done();
-      });
-    });
-
-    it('when handling the dispatch errors', (done) => {
-      dispatcher.subscribe('test', () => {
-        throw new Error('meh');
-      });
-
-      dispatcher.subscribe('test', ({ next }) => next());
-
-      dispatcher.dispatch('test', {}, (err) => {
-        expect(err instanceof Error).toBeTruthy();
-        expect(err.message).toBe('meh');
-        done();
-      });
-    });
-  });
-
   xit('stress test', () => {
     for (let i = 0; i < 2000; i++) {
       dispatcher.subscribe(`test${i}`, ({ dispatch }) => dispatch(`test${i + 1}`));
@@ -443,6 +417,22 @@ describe('Octobus', () => {
 
     return dispatcher.dispatch('test0').then((result) => {
       expect(result).toBe('it works');
+    });
+  });
+
+  describe('publish', () => {
+    it('should publish to multiple subscribers at the same time', () => {
+      const handler1 = jest.fn(({ params }) => `${params} - handler1`);
+      const handler2 = jest.fn(({ params }) => `${params} - handler2`);
+      dispatcher.subscribe('test', handler1);
+      dispatcher.subscribe('test', handler2);
+
+      return dispatcher.publish('test', 'it works').then((result) => {
+        expect(result[0]).toBe('it works - handler2');
+        expect(result[1]).toBe('it works - handler1');
+        expect(handler1.mock.calls.length).toBe(1);
+        expect(handler2.mock.calls.length).toBe(1);
+      });
     });
   });
 });
