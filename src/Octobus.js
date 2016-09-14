@@ -113,11 +113,25 @@ export default class Octobus extends EventEmitter {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
+    this.emitBefore(`publish:${event}`, { params, event });
     return Promise.all(
       handlers.map(
-        ({ handler }) => runHandler(handler, this.buildHandlerArgs({ event, params }))
+        ({ handler, filename }) => {
+          event.selfCalls.push({
+            params,
+            subscriptionFilename: filename.trim(),
+          });
+
+          return runHandler(handler, this.buildHandlerArgs({ event, params }));
+        }
       )
-    );
+    ).then((result) => {
+      this.emitAfter(`publish:${event}`, { params, result, event });
+      return result;
+    }, (error) => {
+      this.emitAfter(`publish:${event}`, { params, error, event });
+      throw error;
+    });
   }
 
   lookup(path, eventFactory = identity) {

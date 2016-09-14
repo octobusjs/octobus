@@ -37,4 +37,8 @@ export default class Event {
   toString() {
     return this.identifier.toString();
   }
+
+  clone() {
+    return new Event(this.identifier, this.parent, this.meta);
+  }
 }
