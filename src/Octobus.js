@@ -83,54 +83,53 @@ export default class Octobus extends EventEmitter {
     this.emit('unsubscribed', eventOrIdentifier, handler);
   }
 
-  dispatch(eventOrIdentifier, params) {
-    const event = eventOrIdentifier instanceof Event ? eventOrIdentifier :
-      new Event(eventOrIdentifier);
-
+  consumeEvent({ eventId, params, runHandlers, getEventName }) {
+    const event = eventId instanceof Event ? eventId : new Event(eventId);
     const handlers = this.getEventHandlersMatching(event);
+    const eventName = getEventName(event);
 
     if (!handlers.length) {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
-    this.emitBefore(event, { params, event });
-    return this.cascadeHandlers(handlers, params, event).then((result) => {
-      this.emitAfter(event, { params, result, event });
+    this.emitBefore(eventName, { params, event });
+    return runHandlers(handlers, params, event).then((result) => {
+      this.emitAfter(eventName, { params, result, event });
       return result;
     }, (error) => {
-      this.emitAfter(event, { params, error, event });
+      this.emitAfter(eventName, { params, error, event });
       throw error;
     });
   }
 
-  publish(eventOrIdentifier, params) {
-    const event = eventOrIdentifier instanceof Event ? eventOrIdentifier :
-      new Event(eventOrIdentifier);
+  dispatch(eventId, params) {
+    return this.consumeEvent({
+      eventId,
+      params,
+      getEventName: (event) => event.toString(),
+      runHandlers: (...args) => this.cascadeHandlers(...args),
+    });
+  }
 
-    const handlers = this.getEventHandlersMatching(event);
+  publish(eventId, params) {
+    return this.consumeEvent({
+      eventId,
+      params,
+      getEventName: (event) => `publish:${event}`,
+      runHandlers: (handlers, _params, event) => (
+        Promise.all(
+          handlers.map(
+            ({ handler, filename }) => {
+              event.selfCalls.push({
+                params,
+                subscriptionFilename: filename.trim(),
+              });
 
-    if (!handlers.length) {
-      return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
-    }
-
-    this.emitBefore(`publish:${event}`, { params, event });
-    return Promise.all(
-      handlers.map(
-        ({ handler, filename }) => {
-          event.selfCalls.push({
-            params,
-            subscriptionFilename: filename.trim(),
-          });
-
-          return runHandler(handler, this.buildHandlerArgs({ event, params }));
-        }
-      )
-    ).then((result) => {
-      this.emitAfter(`publish:${event}`, { params, result, event });
-      return result;
-    }, (error) => {
-      this.emitAfter(`publish:${event}`, { params, error, event });
-      throw error;
+              return runHandler(handler, this.buildHandlerArgs({ event, params: _params }));
+            }
+          )
+        )
+      ),
     });
   }
 
