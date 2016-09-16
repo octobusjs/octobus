@@ -65,7 +65,7 @@ dispatch('foo', 'world').then((result) => {
 });
 ```
 
-## Extensions
+## Related projects
 
 - https://github.com/viczam/octobus-mongodb
 - https://github.com/viczam/hapi-octobus
