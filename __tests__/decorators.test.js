@@ -89,4 +89,15 @@ describe('Octobus', () => {
 
     return dispatcher.dispatch('test');
   });
+
+  it('should be composable', () => {
+    const handler = withDefaultParams(
+      withHandler(({ name }) => `hello ${name}!`),
+      { name: 'Victor' }
+    );
+    dispatcher.subscribe('say.hello', handler);
+    return dispatcher.dispatch('say.hello').then((result) => {
+      expect(result).toBe('hello Victor!');
+    });
+  });
 });
