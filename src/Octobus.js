@@ -17,7 +17,7 @@ export default class Octobus extends EventEmitter {
 
     [
       'dispatch', 'subscribe', 'subscribeMap', 'unsubscribe', 'lookup',
-      'emit', 'emitBefore', 'emitAfter', 'onBefore', 'onAfter',
+      'emit', 'emitBefore', 'emitAfter', 'on', 'onBefore', 'onAfter',
     ].forEach((fn) => {
       this[fn] = this[fn].bind(this);
     });
