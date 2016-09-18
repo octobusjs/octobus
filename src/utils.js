@@ -1,4 +1,4 @@
-import shortid from 'shortid';
+import uuid from 'node-uuid';
 
 const callableErrorMessage = 'Callback already called!';
 
@@ -14,7 +14,7 @@ export const createOneTimeCallable = (fn, errorMessage = callableErrorMessage) =
   };
 };
 
-export const generateUId = () => shortid.generate();
+export const generateUId = () => uuid.v1();
 
 export const getErrorStack = () => (new Error()).stack.toString().split(/\r\n|\n/);
 
