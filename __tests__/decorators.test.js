@@ -8,6 +8,7 @@ const {
   withNamespace,
 } = decorators;
 import Joi from 'joi';
+import flow from 'lodash/flow';
 
 describe('Octobus', () => {
   let dispatcher;
@@ -18,10 +19,10 @@ describe('Octobus', () => {
 
   it('should validate the passed in parameters', () => {
     dispatcher.subscribe('test', withSchema(
-      ({ params }) => params,
       Joi.object({
         foo: Joi.any().valid('foo'),
-      }).required()
+      }).required(),
+      ({ params }) => params
     ));
 
     dispatcher.on('error', (err) => {
@@ -36,10 +37,10 @@ describe('Octobus', () => {
 
   it('should take into consideration the default parameters', () => {
     dispatcher.subscribe('test', withDefaultParams(
-      ({ params }) => params,
       {
         foo: 'bar',
       },
+      ({ params }) => params
     ));
 
     return dispatcher.dispatch('test').then((result) => {
@@ -72,9 +73,9 @@ describe('Octobus', () => {
       const answer = await say.hello('John');
       expect(answer).toBe('hello John!');
     };
-    dispatcher.subscribe('test', withLookups(handler, {
+    dispatcher.subscribe('test', withLookups({
       say: 'say',
-    }));
+    }, handler));
 
     return dispatcher.dispatch('test');
   });
@@ -85,16 +86,17 @@ describe('Octobus', () => {
       const answer = await dispatch('hello', 'John');
       expect(answer).toBe('hello John!');
     };
-    dispatcher.subscribe('test', withNamespace(handler, 'say'));
+    dispatcher.subscribe('test', withNamespace('say', handler));
 
     return dispatcher.dispatch('test');
   });
 
   it('should be composable', () => {
-    const handler = withDefaultParams(
-      withHandler(({ name }) => `hello ${name}!`),
-      { name: 'Victor' }
-    );
+    const handler = flow([
+      withHandler,
+      withDefaultParams.bind(null, { name: 'Victor' }),
+    ])(({ name }) => `hello ${name}!`);
+
     dispatcher.subscribe('say.hello', handler);
     return dispatcher.dispatch('say.hello').then((result) => {
       expect(result).toBe('hello Victor!');
