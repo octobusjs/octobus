@@ -8,6 +8,7 @@ const { withHandler, withDefaultParams } = decorators;
 
 subscribe('math.sum', withHandler(({ left, right }) => left + right));
 subscribe('math.sum', withDefaultParams(
+  { integer: false },
   ({ params, next }) => {
     const { integer, ...nextParams } = params;
 
@@ -17,8 +18,7 @@ subscribe('math.sum', withDefaultParams(
     }
 
     return next(nextParams);
-  },
-  { integer: false }
+  }
 ));
 subscribe('math.product', withHandler(({ left, right }) => left * right));
 
@@ -30,6 +30,6 @@ const run = async () => {
   assert.equal(await dispatch('math.sum', { left: 1.5, right: 2.5, integer: true }), 3); // 3
 };
 
-run().catch((err) => {
+run().then(() => console.log('all good!'), (err) => {
   console.log(err);
 });
