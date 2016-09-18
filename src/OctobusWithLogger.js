@@ -1,6 +1,7 @@
 import Octobus from './Octobus';
 import repeat from 'lodash/repeat';
 import microtime from 'microtime';
+import { getErrorStack } from './utils';
 
 const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
 
@@ -8,7 +9,19 @@ const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
 const fileIndicator = String.fromCharCode(9500);
 
-export default class OctobusLogger extends Octobus {
+const getSubscriptionFileName = () => {
+  const stack = getErrorStack().reverse();
+  let index = 0;
+  while (index < stack.length) {
+    if (/.*(OctobusWithLogger.subscribe).*/.test(stack[index])) {
+      return stack[index - 1];
+    }
+    index++;
+  }
+  return false;
+};
+
+export default class OctobusWithLogger extends Octobus {
   static defaultOptions = {
     log: console.log.bind(console), // eslint-disable-line no-console
     logSubscriptions: true,
@@ -18,11 +31,29 @@ export default class OctobusLogger extends Octobus {
   constructor(options = {}) {
     super();
     this.options = {
-      ...OctobusLogger.defaultOptions,
+      ...OctobusWithLogger.defaultOptions,
       ...options,
     };
 
     this.timetable = {};
+  }
+
+  subscribe(rawEventIdentifier, handler, priority, meta = {}) {
+    return super.subscribe(rawEventIdentifier, handler, priority, {
+      ...meta,
+      filename: getSubscriptionFileName(),
+    });
+  }
+
+  runHandler(args) {
+    const { event, params, handlerConfig } = args;
+
+    event.selfCalls.push({
+      params,
+      subscriptionFilename: handlerConfig.meta.filename.trim(),
+    });
+
+    return super.runHandler(args);
   }
 
   emit(...args) {

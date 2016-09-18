@@ -1,14 +1,14 @@
 export default class HandlersMap extends Map {
-  set(key, { handler, priority, filename }) {
+  set(key, handlerConfig) {
     if (!this.has(key)) {
       super.set(key, []);
     }
 
-    if (priority === undefined) {
-      priority = 1; // eslint-disable-line no-param-reassign
+    if (handlerConfig.priority === undefined) {
+      handlerConfig.priority = 1; // eslint-disable-line no-param-reassign
     }
 
-    this.get(key).unshift({ handler, priority, filename });
+    this.get(key).unshift(handlerConfig);
   }
 
   delete(key, handler = null) {

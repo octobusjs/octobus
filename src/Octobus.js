@@ -1,5 +1,5 @@
 import EventEmitter from 'events';
-import { getErrorStack, runHandler } from './utils';
+import { runHandler } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
 import identity from 'lodash/identity';
@@ -35,7 +35,7 @@ export default class Octobus extends EventEmitter {
     );
   }
 
-  subscribe(rawEventIdentifier, handler, priority) {
+  subscribe(rawEventIdentifier, handler, priority, meta = {}) {
     const eventIdentifier = this.validateSubscription(rawEventIdentifier);
 
     if (typeof handler !== 'function') {
@@ -46,9 +46,7 @@ export default class Octobus extends EventEmitter {
 
     this.addMatcher(eventIdentifier);
 
-    const filename = getErrorStack()[3];
-
-    this.handlersMap.set(eventIdentifier.toString(), { handler, priority, filename });
+    this.handlersMap.set(eventIdentifier.toString(), { handler, priority, meta });
 
     this.emit('subscribed', eventIdentifier, handler);
 
@@ -119,14 +117,7 @@ export default class Octobus extends EventEmitter {
       runHandlers: (handlers, _params, event) => (
         Promise.all(
           handlers.map(
-            ({ handler, filename }) => {
-              event.selfCalls.push({
-                params,
-                subscriptionFilename: filename.trim(),
-              });
-
-              return runHandler(handler, this.buildHandlerArgs({ event, params: _params }));
-            }
+            (handlerConfig) => this.runHandler({ handlerConfig, event, params: _params })
           )
         )
       ),
@@ -180,16 +171,19 @@ export default class Octobus extends EventEmitter {
     };
   }
 
-  cascadeHandlers(handlers, params, event) {
-    const { handler, filename } = handlers.shift();
-
-    event.selfCalls.push({
-      params,
-      subscriptionFilename: filename.trim(),
+  runHandler(args) {
+    const { handlerConfig, params, event, ...rest } = args;
+    return runHandler(handlerConfig.handler, {
+      ...this.buildHandlerArgs({ event, params }),
+      ...rest,
     });
+  }
 
-    return runHandler(handler, {
-      ...this.buildHandlerArgs({ params, event }),
+  cascadeHandlers(handlers, params, event) {
+    const handlerConfig = handlers.shift();
+
+    return this.runHandler({
+      handlerConfig, params, event,
       next: handlers.length ?
         (nextParams) => this.cascadeHandlers(handlers, nextParams, event) :
         undefined,
