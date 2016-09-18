@@ -410,7 +410,7 @@ describe('Octobus', () => {
   });
 
   xit('stress test', () => {
-    for (let i = 0; i < 2000; i++) {
+    for (let i = 0; i < 10000; i++) {
       dispatcher.subscribe(`test${i}`, ({ dispatch }) => dispatch(`test${i + 1}`));
     }
     dispatcher.subscribe('test1000', () => 'it works');
