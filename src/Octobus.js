@@ -105,7 +105,7 @@ export default class Octobus extends EventEmitter {
       eventId,
       params,
       getEventName: (event) => event.toString(),
-      runHandlers: (...args) => this.cascadeHandlers(...args),
+      runHandlers: this.cascadeHandlers.bind(this),
     });
   }
 
