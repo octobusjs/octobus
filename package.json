@@ -4,8 +4,9 @@
   "description": "An event dispatcher aimed for AOP.",
   "main": "dist/index.js",
   "scripts": {
-    "test:watch": "jest --watch",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --watch --coverage",
     "prebuild": "rimraf dist",
     "build": "babel src --copy-files --out-dir dist",
     "prepublish": "npm run build",
@@ -71,6 +72,9 @@
     ]
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/*.js"
+    ]
   }
 }

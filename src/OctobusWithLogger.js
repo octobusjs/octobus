@@ -9,7 +9,7 @@ const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
 const fileIndicator = String.fromCharCode(9500);
 
-const getSubscriptionFileName = () => {
+const getSubscriptionFileName = () => { // eslint-disable-line consistent-return
   const stack = getErrorStack().reverse();
   let index = 0;
   while (index < stack.length) {
@@ -18,7 +18,6 @@ const getSubscriptionFileName = () => {
     }
     index++;
   }
-  return false;
 };
 
 export default class OctobusWithLogger extends Octobus {

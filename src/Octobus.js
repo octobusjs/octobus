@@ -44,7 +44,9 @@ export default class Octobus extends EventEmitter {
       `);
     }
 
-    this.addMatcher(eventIdentifier);
+    if (eventIdentifier instanceof RegExp) {
+      this.addMatcher(eventIdentifier);
+    }
 
     this.handlersMap.set(eventIdentifier.toString(), { handler, priority, meta });
 
@@ -69,7 +71,7 @@ export default class Octobus extends EventEmitter {
   unsubscribe(eventOrIdentifier, handler = null) {
     const event = eventOrIdentifier.toString();
 
-    this.handlersMap.delete(event, handler);
+    const ret = this.handlersMap.delete(event, handler);
 
     if (!handler) {
       const matcherIndex = this.matchers.findIndex((m) => m.toString() === event);
@@ -79,6 +81,8 @@ export default class Octobus extends EventEmitter {
     }
 
     this.emit('unsubscribed', eventOrIdentifier, handler);
+
+    return ret;
   }
 
   consumeEvent({ eventId, params, runHandlers, getEventName }) {
@@ -134,10 +138,6 @@ export default class Octobus extends EventEmitter {
   }
 
   addMatcher(matcher) {
-    if (!(matcher instanceof RegExp)) {
-      return;
-    }
-
     const existingMatcher = this.matchers.find((m) => m.toString() === matcher.toString());
 
     if (!existingMatcher) {

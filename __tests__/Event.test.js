@@ -28,4 +28,34 @@ describe('Event', () => {
     const ev = new Event('my.event');
     expect(ev.toString()).toBe('my.event');
   });
+
+  it('should allow cloning an event', () => {
+    const ev = new Event('my.event', 'some parent', { meta: 'data' });
+    ev.selfCalls.push('something');
+    const clone = ev.clone();
+    expect(clone instanceof Event).toBeTruthy();
+    expect(clone.uid).toBeDefined();
+    expect(clone.uid).not.toBe(ev.uid);
+    expect(clone.meta).toBe(ev.meta);
+    expect(clone.parent).toBe(ev.parent);
+  });
+
+  it('should extend meta when creating an event from another one', () => {
+    const ev = Event.from(
+      new Event('my.event', 'parent1', {
+        meta: 'data',
+      }),
+      'parent2',
+      {
+        more: true,
+      }
+    );
+
+    expect(ev instanceof Event).toBeTruthy();
+    expect(ev.parent).toBe('parent2');
+    expect(ev.meta).toEqual({
+      meta: 'data',
+      more: true,
+    });
+  });
 });

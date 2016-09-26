@@ -1,10 +1,13 @@
 import Joi from 'joi';
 import memoize from 'lodash/memoize';
+import isPlainObject from 'lodash/isPlainObject';
 
 export const withDefaultParams = (defaultParams, handler) => (args, cb) => {
   const { params } = args;
-  const isPlainObject = typeof defaultParams === 'object' && !Array.isArray(defaultParams);
-  const processedParams = isPlainObject ? { ...defaultParams, ...params } : params || defaultParams;
+  const isMergeable = isPlainObject(defaultParams) && isPlainObject(params);
+  const processedParams = isMergeable ?
+    { ...defaultParams, ...params } :
+    (params || defaultParams);
 
   return handler({
     ...args,
