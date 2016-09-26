@@ -388,6 +388,24 @@ describe('Octobus', () => {
       });
     });
 
+    it('should return false when unsubscribing nonexistent event', () => {
+      expect(dispatcher.unsubscribe('test')).toBeFalsy();
+    });
+
+    it('should unsubscribe a regex', () => {
+      dispatcher.subscribe(/^test$/, () => 'it works');
+      return dispatcher.dispatch('test').then((result) => {
+        expect(result).toBe('it works');
+
+        dispatcher.unsubscribe(/^test$/);
+
+        return dispatcher.dispatch('test').catch((err) => {
+          expect(err instanceof Error).toBeTruthy();
+          expect(err.message).toMatch(/No handlers/);
+        });
+      });
+    });
+
     it('should be able to unsubscribe using the object returned by subscribeMap', () => {
       const unsubscribe = dispatcher.subscribeMap('Something', {
         foo() {

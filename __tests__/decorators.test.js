@@ -17,7 +17,7 @@ describe('Octobus', () => {
     dispatcher = new Octobus();
   });
 
-  it('should validate the passed in parameters', () => {
+  it('should fail when the params are invalid', () => {
     dispatcher.subscribe('test', withSchema(
       Joi.object({
         foo: Joi.any().valid('foo'),
@@ -35,7 +35,20 @@ describe('Octobus', () => {
     });
   });
 
-  it('should take into consideration the default parameters', () => {
+  it('should pass when the params are valid', () => {
+    dispatcher.subscribe('test', withSchema(
+      Joi.object({
+        foo: Joi.any().valid('foo'),
+      }).required(),
+      ({ params }) => params
+    ));
+
+    return dispatcher.dispatch('test', { foo: 'foo' }).then((result) => {
+      expect(result).toEqual({ foo: 'foo' });
+    });
+  });
+
+  it('should use the default parameters', () => {
     dispatcher.subscribe('test', withDefaultParams(
       {
         foo: 'bar',
@@ -46,6 +59,33 @@ describe('Octobus', () => {
     return dispatcher.dispatch('test').then((result) => {
       expect(result).toEqual({
         foo: 'bar',
+      });
+    });
+  });
+
+  it('should use the actual parameters', () => {
+    dispatcher.subscribe('test', withDefaultParams(
+      false,
+      ({ params }) => params
+    ));
+
+    return dispatcher.dispatch('test', true).then((result) => {
+      expect(result).toBeTruthy();
+    });
+  });
+
+  it('should merge the default parameters', () => {
+    dispatcher.subscribe('test', withDefaultParams(
+      {
+        foo: 'bar',
+      },
+      ({ params }) => params
+    ));
+
+    return dispatcher.dispatch('test', { bar: 'baz' }).then((result) => {
+      expect(result).toEqual({
+        foo: 'bar',
+        bar: 'baz',
       });
     });
   });
