@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { OctobusWithLogger } from '../src';
 
 describe('Octobus', () => {
@@ -38,5 +39,44 @@ describe('Octobus', () => {
       expect(logger.length).toBe(3);
       expect(logger[0]).toMatch(/^- test\(2\) \[\d+(\.\d+)?ms\]$/);
     });
+  });
+
+  it('shouldn\'t log the subscriptions', () => {
+    dispatcher = new OctobusWithLogger({
+      log(msg) {
+        logger.push(msg);
+      },
+      logSubscriptions: false,
+    });
+
+    dispatcher.subscribe('test', () => 'it works');
+
+    return dispatcher.dispatch('test').then(() => {
+      expect(logger.length).toBe(1);
+    });
+  });
+
+  it('shouldn\'t log the params', () => {
+    const nr = Math.random();
+    dispatcher = new OctobusWithLogger({
+      log(msg) {
+        logger.push(msg);
+      },
+      logParams: false,
+    });
+
+    dispatcher.subscribe('test', () => 'it works');
+
+    return dispatcher.dispatch('test', { nr }).then(() => {
+      expect(logger.length).toBe(2);
+      expect(logger[1]).not.toMatch(new RegExp(nr.toString()));
+    });
+  });
+
+  it('should log calls to the console', () => {
+    // don't know how to mock the console.log calls yet
+    dispatcher = new OctobusWithLogger();
+    dispatcher.subscribe('test', () => 'it works');
+    return dispatcher.dispatch('test');
   });
 });

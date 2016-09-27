@@ -7,8 +7,6 @@ const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
 
 const getDuration = ({ start, end }) => formatNumber((end - start) / 1000);
 
-const fileIndicator = String.fromCharCode(9500);
-
 const getSubscriptionFileName = () => { // eslint-disable-line consistent-return
   const stack = getErrorStack().reverse();
   let index = 0;
@@ -91,7 +89,11 @@ export default class OctobusWithLogger extends Octobus {
     if (this.options.logSubscriptions) {
       event.selfCalls.forEach((selfCall) => {
         const { params, subscriptionFilename } = selfCall;
-        let msg = `${repeat('  ', level - 1)}  ${fileIndicator} ${subscriptionFilename}`;
+        let msg = [
+          repeat('  ', level - 1),
+          String.fromCharCode(9500),
+          subscriptionFilename,
+        ].join(' ');
 
         if (this.options.logParams) {
           msg += `: ${JSON.stringify(params)}`;

@@ -122,9 +122,12 @@ describe('Octobus', () => {
 
   it('should bind dispatch calls to a namespace', () => {
     dispatcher.subscribe('say.hello', ({ params: name }) => `hello ${name}!`);
+    dispatcher.subscribe('say', ({ params: something }) => something);
     const handler = async ({ dispatch }) => {
       const answer = await dispatch('hello', 'John');
+      const something = await dispatch(null, 'it works');
       expect(answer).toBe('hello John!');
+      expect(something).toBe('it works');
     };
     dispatcher.subscribe('test', withNamespace('say', handler));
 

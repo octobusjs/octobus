@@ -1,8 +1,6 @@
 import uuid from 'node-uuid';
 
-const callableErrorMessage = 'Callback already called!';
-
-export const createOneTimeCallable = (fn, errorMessage = callableErrorMessage) => {
+export const createOneTimeCallable = (fn, errorMessage) => {
   let called = false;
   return (...args) => {
     if (called) {
