@@ -17,7 +17,7 @@ export default class Event {
       return Object.assign(eventOrIdentifier, {
         parent,
         meta: {
-          ...(eventOrIdentifier.meta || {}),
+          ...eventOrIdentifier.meta,
           ...meta,
         },
       });

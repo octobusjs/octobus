@@ -388,6 +388,21 @@ describe('Octobus', () => {
       });
     });
 
+    it('should unsubscribe a single handler', () => {
+      const subscriber1 = jest.fn(({ next }) => (next ? next() : false));
+      const subscriber2 = jest.fn(({ next }) => (next ? next() : false));
+
+      dispatcher.subscribe('test', subscriber1);
+      dispatcher.subscribe('test', subscriber2);
+
+      dispatcher.unsubscribe('test', subscriber1);
+
+      return dispatcher.dispatch('test').then(() => {
+        expect(subscriber1).not.toBeCalled();
+        expect(subscriber2).toBeCalled();
+      });
+    });
+
     it('should return false when unsubscribing nonexistent event', () => {
       expect(dispatcher.unsubscribe('test')).toBeFalsy();
     });
