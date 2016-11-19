@@ -8,7 +8,7 @@ const {
   withNamespace,
 } = decorators;
 import Joi from 'joi';
-import flow from 'lodash/flow';
+import { applyDecorators } from '../src/utils';
 
 describe('Octobus', () => {
   let dispatcher;
@@ -21,9 +21,8 @@ describe('Octobus', () => {
     dispatcher.subscribe('test', withSchema(
       Joi.object({
         foo: Joi.any().valid('foo'),
-      }).required(),
-      ({ params }) => params
-    ));
+      }).required()
+    )(({ params }) => params));
 
     dispatcher.on('error', (err) => {
       expect(err instanceof Error).toBeTruthy();
@@ -39,9 +38,8 @@ describe('Octobus', () => {
     dispatcher.subscribe('test', withSchema(
       Joi.object({
         foo: Joi.any().valid('foo'),
-      }).required(),
-      ({ params }) => params
-    ));
+      }).required()
+    )(({ params }) => params));
 
     return dispatcher.dispatch('test', { foo: 'foo' }).then((result) => {
       expect(result).toEqual({ foo: 'foo' });
@@ -52,9 +50,8 @@ describe('Octobus', () => {
     dispatcher.subscribe('test', withDefaultParams(
       {
         foo: 'bar',
-      },
-      ({ params }) => params
-    ));
+      }
+    )(({ params }) => params));
 
     return dispatcher.dispatch('test').then((result) => {
       expect(result).toEqual({
@@ -64,10 +61,7 @@ describe('Octobus', () => {
   });
 
   it('should use the actual parameters', () => {
-    dispatcher.subscribe('test', withDefaultParams(
-      false,
-      ({ params }) => params
-    ));
+    dispatcher.subscribe('test', withDefaultParams(false)(({ params }) => params));
 
     return dispatcher.dispatch('test', true).then((result) => {
       expect(result).toBeTruthy();
@@ -78,9 +72,8 @@ describe('Octobus', () => {
     dispatcher.subscribe('test', withDefaultParams(
       {
         foo: 'bar',
-      },
-      ({ params }) => params
-    ));
+      }
+    )(({ params }) => params));
 
     return dispatcher.dispatch('test', { bar: 'baz' }).then((result) => {
       expect(result).toEqual({
@@ -115,7 +108,7 @@ describe('Octobus', () => {
     };
     dispatcher.subscribe('test', withLookups({
       say: 'say',
-    }, handler));
+    })(handler));
 
     return dispatcher.dispatch('test');
   });
@@ -129,16 +122,16 @@ describe('Octobus', () => {
       expect(answer).toBe('hello John!');
       expect(something).toBe('it works');
     };
-    dispatcher.subscribe('test', withNamespace('say', handler));
+    dispatcher.subscribe('test', withNamespace('say')(handler));
 
     return dispatcher.dispatch('test');
   });
 
   it('should be composable', () => {
-    const handler = flow([
+    const handler = applyDecorators([
+      withDefaultParams({ name: 'Victor' }),
       withHandler,
-      withDefaultParams.bind(null, { name: 'Victor' }),
-    ])(({ name }) => `hello ${name}!`);
+    ], ({ name }) => `hello ${name}!`);
 
     dispatcher.subscribe('say.hello', handler);
     return dispatcher.dispatch('say.hello').then((result) => {

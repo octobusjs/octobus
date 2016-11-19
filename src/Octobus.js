@@ -6,6 +6,8 @@ import identity from 'lodash/identity';
 import sortBy from 'lodash/sortBy';
 import Joi from 'joi';
 
+const createEvent = (eventId) => (eventId instanceof Event ? eventId : new Event(eventId));
+
 export default class Octobus extends EventEmitter {
   constructor() {
     super();
@@ -14,6 +16,7 @@ export default class Octobus extends EventEmitter {
 
     this.handlersMap = new HandlersMap();
     this.matchers = [];
+    this.queue = {};
 
     [
       'dispatch', 'subscribe', 'subscribeMap', 'unsubscribe', 'lookup',
@@ -85,17 +88,19 @@ export default class Octobus extends EventEmitter {
     return ret;
   }
 
-  consumeEvent({ eventId, params, runHandlers, getEventName }) {
-    const event = eventId instanceof Event ? eventId : new Event(eventId);
+  consumeEvent({ event, params, runHandlers, eventName }) {
     const handlers = this.getEventHandlersMatching(event);
-    const eventName = getEventName(event);
+
+    if (!eventName) {
+      eventName = event.toString(); // eslint-disable-line no-param-reassign
+    }
 
     if (!handlers.length) {
       return Promise.reject(new Error(`No handlers registered for the ${event} event.`));
     }
 
     this.emitBefore(eventName, { params, event });
-    return runHandlers(handlers, params, event).then((result) => {
+    return runHandlers(handlers).then((result) => {
       this.emitAfter(eventName, { params, result, event });
       return result;
     }, (error) => {
@@ -105,23 +110,26 @@ export default class Octobus extends EventEmitter {
   }
 
   dispatch(eventId, params) {
+    const event = createEvent(eventId);
+
     return this.consumeEvent({
-      eventId,
+      event,
       params,
-      getEventName: (event) => event.toString(),
-      runHandlers: this.cascadeHandlers.bind(this),
+      runHandlers: (handlers) => this.cascadeHandlers.call(this, handlers, params, event),
     });
   }
 
   publish(eventId, params) {
+    const event = createEvent(eventId);
+
     return this.consumeEvent({
-      eventId,
+      event,
+      eventName: `publish:${event}`,
       params,
-      getEventName: (event) => `publish:${event}`,
-      runHandlers: (handlers, _params, event) => (
+      runHandlers: (handlers) => (
         Promise.all(
           handlers.map(
-            (handlerConfig) => this.runHandler({ handlerConfig, event, params: _params })
+            (handlerConfig) => this.runHandler({ handlerConfig, event, params })
           )
         )
       ),
