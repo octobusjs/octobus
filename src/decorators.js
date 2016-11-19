@@ -2,7 +2,7 @@ import Joi from 'joi';
 import memoize from 'lodash/memoize';
 import isPlainObject from 'lodash/isPlainObject';
 
-export const withDefaultParams = (defaultParams, handler) => (args, cb) => {
+export const withDefaultParams = (defaultParams) => (handler) => (args, cb) => {
   const { params } = args;
   const isMergeable = isPlainObject(defaultParams) && isPlainObject(params);
   const processedParams = isMergeable ?
@@ -15,7 +15,7 @@ export const withDefaultParams = (defaultParams, handler) => (args, cb) => {
   }, cb);
 };
 
-export const withSchema = (schema, handler) => (args, cb) => {
+export const withSchema = (schema) => (handler) => (args, cb) => {
   const { params } = args;
   const processedParams = Joi.attempt(params, schema);
 
@@ -25,7 +25,7 @@ export const withSchema = (schema, handler) => (args, cb) => {
   }, cb);
 };
 
-export const withNamespace = (namespace, handler) => (args, cb) => {
+export const withNamespace = (namespace) => (handler) => (args, cb) => {
   const { dispatch } = args;
 
   return handler({
@@ -40,7 +40,7 @@ export const withNamespace = (namespace, handler) => (args, cb) => {
   }, cb);
 };
 
-export const withLookups = (lookups, handler) => (args, cb) => {
+export const withLookups = (lookups) => (handler) => (args, cb) => {
   const { lookup } = args;
 
   const dispatches = Object.keys(lookups).reduce((ds, key) => ({

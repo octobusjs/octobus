@@ -1,4 +1,5 @@
 import uuid from 'node-uuid';
+import flow from 'lodash/flow';
 
 export const createOneTimeCallable = (fn, errorMessage) => {
   let called = false;
@@ -55,3 +56,5 @@ export const runHandler = (handler, args) => {
 
   return promise;
 };
+
+export const applyDecorators = (decorators, handler) => flow(decorators.reverse())(handler);
