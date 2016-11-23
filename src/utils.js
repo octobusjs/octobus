@@ -1,4 +1,4 @@
-import uuid from 'node-uuid';
+import uuid from 'uuid';
 import flow from 'lodash/flow';
 
 export const createOneTimeCallable = (fn, errorMessage) => {
