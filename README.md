@@ -29,7 +29,7 @@ Requirements:
 It's up to you how to name it, but here are some suggestions: dispatcher, eventDispatcher, eventBus, serviceLocator etc.
 
 ```js
-import Octobus from 'octobus.js';
+const Octobus = require('octobus.js').default;
 const dispatcher = new Octobus();
 ```
 
@@ -37,16 +37,16 @@ const dispatcher = new Octobus();
 The namespace matters, since you're going to use it when you call the function (service).
 
 ```js
-dispatcher.subscribe('foo', function(options, cb) {
-  var name = options.params;
-  cb(null, "Hello " + name + '!');
+dispatcher.subscribe('foo', function (options, cb) {
+  const name = options.params;
+  cb(null, "Hello " + name + "!");
 });
 ```
 
 3) Then you'll start dispatching events:
 
 ```js
-dispatcher.dispatch('foo', 'world', (err, result) => {
+dispatcher.dispatch('foo', 'world').then(function (result) {
   console.log(result); // Hello world!
 });
 ```
