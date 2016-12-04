@@ -1,7 +1,6 @@
 import Octobus from './Octobus';
 import repeat from 'lodash/repeat';
-import microtime from 'microtime';
-import { getErrorStack } from './utils';
+import { getErrorStack, getTime } from './utils';
 
 const formatNumber = (nr) => parseFloat(Math.round(nr * 100) / 100).toFixed(2);
 
@@ -62,11 +61,11 @@ export default class OctobusWithLogger extends Octobus {
         this.timetable[event.uid] = {
           event,
           params,
-          start: microtime.now(),
+          start: getTime(),
           children: [],
         };
       } else {
-        this.timetable[event.uid].end = microtime.now();
+        this.timetable[event.uid].end = getTime();
 
         if (event.parent) {
           this.timetable[event.parent.uid].children.push(this.timetable[event.uid]);
