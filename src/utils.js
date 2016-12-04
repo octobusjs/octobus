@@ -1,4 +1,4 @@
-import uuid from 'node-uuid';
+import uuid from 'uuid/v1';
 import flow from 'lodash/flow';
 
 export const createOneTimeCallable = (fn, errorMessage) => {
@@ -13,7 +13,7 @@ export const createOneTimeCallable = (fn, errorMessage) => {
   };
 };
 
-export const generateUId = () => uuid.v1();
+export const generateUId = uuid;
 
 export const getErrorStack = () => (new Error()).stack.toString().split(/\r\n|\n/);
 
@@ -58,3 +58,5 @@ export const runHandler = (handler, args) => {
 };
 
 export const applyDecorators = (decorators, handler) => flow(decorators.reverse())(handler);
+
+export const getTime = () => new Date().getTime();
