@@ -64,16 +64,16 @@ export default class OctobusWithLogger extends Octobus {
           start: getTime(),
           children: [],
         };
-      } else {
-        this.timetable[event.uid].end = getTime();
 
         if (event.parent) {
           this.timetable[event.parent.uid].children.push(this.timetable[event.uid]);
-        } else {
+        }
+      } else {
+        this.timetable[event.uid].end = getTime();
+
+        if (!event.parent) {
           this.logItem(this.timetable[event.uid]);
         }
-
-        delete this.timetable[event.uid];
       }
     }
 
@@ -84,7 +84,8 @@ export default class OctobusWithLogger extends Octobus {
     const { event } = item;
     const { identifier } = event;
     const callsNr = event.selfCalls.length;
-    this.options.log(`${repeat('- ', level)}${identifier}(${callsNr}) [${getDuration(item)}ms]`);
+    const duration = !item.end ? 'not-completed' : `${getDuration(item)}ms`;
+    this.options.log(`${repeat('- ', level)}${identifier}(${callsNr}) [${duration}]`);
     if (this.options.logSubscriptions) {
       event.selfCalls.forEach((selfCall) => {
         const { params, subscriptionFilename } = selfCall;
