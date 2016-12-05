@@ -16,17 +16,34 @@ describe('Octobus', () => {
 
   it('log service calls', () => {
     dispatcher.subscribe('another.test', ({ next }) => next({ first: 1 }), 1000);
+    dispatcher.subscribe('doSomething', ({ reply }) => {
+      setTimeout(() => {
+        reply('done');
+      }, 50);
+    });
     dispatcher.subscribe('test', ({ event }) => event.parent.identifier);
     dispatcher.subscribe('another.test', ({ next }) => next(), 9);
     dispatcher.subscribe('another.test',
       ({ dispatch, params }) => dispatch('test', { ...params, third: 3 }), 10
     );
-    dispatcher.subscribe('another.test', ({ next, params }) => next({ ...params, second: 2 }), 100);
+    dispatcher.subscribe('another.test', ({ next, params, reply, dispatch }) => {
+      dispatch('doSomething');
+      setTimeout(() => {
+        reply(next({ ...params, second: 2 }));
+      }, 10);
+    }, 100);
 
-    return dispatcher.dispatch('another.test', {}).then(() => {
-      expect(logger[0]).toMatch(/^- another.test\(3\) \[\d+(\.\d+)?ms\]$/);
-      expect(logger[4]).toMatch(/^- - test\(1\) \[\d+(\.\d+)?ms\]$/);
-    });
+    return dispatcher.dispatch('another.test', {}).then(() => (
+      new Promise((resolve) => {
+        console.log(logger);
+        setTimeout(() => {
+          expect(logger[0]).toMatch(/^- another.test\(3\) \[\d+(\.\d+)?ms\]$/);
+          expect(logger[4]).toMatch(/^- - doSomething\(1\) \[not-completed\]$/);
+          expect(logger[6]).toMatch(/^- - test\(1\) \[\d+(\.\d+)?ms\]$/);
+          resolve();
+        }, 200);
+      })
+    ));
   });
 
   it('should publish to multiple subscribers at the same time', () => {
