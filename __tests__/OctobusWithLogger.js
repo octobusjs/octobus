@@ -35,7 +35,6 @@ describe('Octobus', () => {
 
     return dispatcher.dispatch('another.test', {}).then(() => (
       new Promise((resolve) => {
-        console.log(logger);
         setTimeout(() => {
           expect(logger[0]).toMatch(/^- another.test\(3\) \[\d+(\.\d+)?ms\]$/);
           expect(logger[4]).toMatch(/^- - doSomething\(1\) \[not-completed\]$/);
