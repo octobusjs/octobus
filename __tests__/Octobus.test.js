@@ -368,6 +368,41 @@ describe('Octobus', () => {
     });
   });
 
+  describe('subscribeTree', () => {
+    it('should subscribe to a tree of handlers', () => {
+      const namespace = 'some';
+
+      dispatcher.subscribeTree(namespace, {
+        random: {
+          namespace: {
+            foo({ dispatch, params = {} }) {
+              return dispatch(`${namespace}.random.namespace.bar`, {
+                ...params,
+                foo: true,
+              });
+            },
+
+            bar({ params = {} }) {
+              return {
+                ...params,
+                bar: true,
+              };
+            },
+          },
+        },
+      });
+
+      const Something = dispatcher.lookup(`${namespace}.random.namespace`);
+
+      return Something.foo().then((result) => {
+        expect(result).toEqual({
+          foo: true,
+          bar: true,
+        });
+      });
+    });
+  });
+
   describe('unsubscribing', () => {
     it('should unsubscribe all handlers of a specific event', () => {
       const subscriber1 = jest.fn(() => true);

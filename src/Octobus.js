@@ -3,6 +3,7 @@ import { runHandler } from './utils';
 import HandlersMap from './HandlersMap';
 import Event from './Event';
 import identity from 'lodash/identity';
+import trimStart from 'lodash/trimStart';
 import sortBy from 'lodash/sortBy';
 import Joi from 'joi';
 
@@ -21,6 +22,7 @@ export default class Octobus extends EventEmitter {
     [
       'dispatch', 'subscribe', 'subscribeMap', 'unsubscribe', 'lookup',
       'emit', 'emitBefore', 'emitAfter', 'on', 'onBefore', 'onAfter',
+      'subscribeTree',
     ].forEach((fn) => {
       this[fn] = this[fn].bind(this);
     });
@@ -67,6 +69,25 @@ export default class Octobus extends EventEmitter {
       return {
         ...acc,
         [method]: () => this.unsubscribe(eventIdentifier, handler),
+      };
+    }, {});
+  }
+
+  subscribeTree(prefix, tree) {
+    return Object.keys(tree).reduce((acc, name) => {
+      const namespace = trimStart(`${prefix}.${name}`, '.');
+      const handlerOrSubTree = tree[name];
+      let unsubscribe;
+      if (typeof handlerOrSubTree !== 'function') {
+        unsubscribe = this.subscribeTree(namespace, handlerOrSubTree);
+      } else {
+        this.subscribe(namespace, handlerOrSubTree);
+        unsubscribe = () => this.unsubscribe(namespace, handlerOrSubTree);
+      }
+
+      return {
+        ...acc,
+        [name]: unsubscribe,
       };
     }, {});
   }
