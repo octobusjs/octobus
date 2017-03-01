@@ -337,37 +337,6 @@ describe('Octobus', () => {
     });
   });
 
-  describe('subscribeMap', () => {
-    it('should subscribe to a map of handlers', () => {
-      const namespace = 'some.random.namespace';
-
-      dispatcher.subscribeMap(`${namespace}.Something`, {
-        foo({ dispatch, params = {} }) {
-          return dispatch(`${namespace}.Something.bar`, {
-            ...params,
-            foo: true,
-          });
-        },
-
-        bar({ params = {} }) {
-          return {
-            ...params,
-            bar: true,
-          };
-        },
-      });
-
-      const Something = dispatcher.lookup(`${namespace}.Something`);
-
-      return Something.foo().then((result) => {
-        expect(result).toEqual({
-          foo: true,
-          bar: true,
-        });
-      });
-    });
-  });
-
   describe('subscribeTree', () => {
     it('should subscribe to a tree of handlers', () => {
       const namespace = 'some';
@@ -452,26 +421,6 @@ describe('Octobus', () => {
         return dispatcher.dispatch('test').catch((err) => {
           expect(err instanceof Error).toBeTruthy();
           expect(err.message).toMatch(/No handlers/);
-        });
-      });
-    });
-
-    it('should be able to unsubscribe using the object returned by subscribeMap', () => {
-      const unsubscribe = dispatcher.subscribeMap('Something', {
-        foo() {
-          return 'it works';
-        },
-      });
-
-      const Something = dispatcher.lookup('Something');
-
-      return Something.foo().then((result) => {
-        expect(result).toBe('it works');
-        unsubscribe.foo();
-
-        return Something.foo().catch((err) => {
-          expect(err).toBeDefined();
-          expect(err.message).toMatch(/No handlers registered/);
         });
       });
     });

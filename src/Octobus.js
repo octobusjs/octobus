@@ -17,12 +17,10 @@ export default class Octobus extends EventEmitter {
 
     this.handlersMap = new HandlersMap();
     this.matchers = [];
-    this.queue = {};
 
     [
-      'dispatch', 'subscribe', 'subscribeMap', 'unsubscribe', 'lookup',
-      'emit', 'emitBefore', 'emitAfter', 'on', 'onBefore', 'onAfter',
-      'subscribeTree',
+      'dispatch', 'subscribe', 'unsubscribe', 'lookup', 'emit', 'emitBefore',
+      'emitAfter', 'on', 'onBefore', 'onAfter', 'subscribeTree',
     ].forEach((fn) => {
       this[fn] = this[fn].bind(this);
     });
@@ -58,19 +56,6 @@ export default class Octobus extends EventEmitter {
     this.emit('subscribed', eventIdentifier, handler);
 
     return () => this.unsubscribe(eventIdentifier, handler);
-  }
-
-  subscribeMap(prefix, map) {
-    return Object.keys(map).reduce((acc, method) => {
-      const eventIdentifier = `${prefix}.${method}`;
-      const handler = map[method];
-      this.subscribe(eventIdentifier, handler);
-
-      return {
-        ...acc,
-        [method]: () => this.unsubscribe(eventIdentifier, handler),
-      };
-    }, {});
   }
 
   subscribeTree(prefix, tree) {
