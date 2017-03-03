@@ -2,8 +2,8 @@ import pick from 'lodash/pick';
 import uuid from 'uuid/v1';
 
 class Message {
-  constructor(topic, data, parentId) {
-    this.topic = topic;
+  constructor(channel, data, parentId) {
+    this.channel = channel;
     this.data = data;
     this.parentId = parentId;
     this.timestamp = Date.now();
@@ -28,17 +28,8 @@ class Message {
     this.isStopped = true;
   }
 
-  toString() {
-    return this.topic;
-  }
-
   toJSON() {
-    return pick(this, ['topic', 'data', 'id']);
-  }
-
-  clone(event) {
-    const { topic, data, id } = event.toJSON();
-    return new Event(topic, data, id);
+    return pick(this, ['channel', 'data', 'id']);
   }
 }
 

@@ -1,4 +1,5 @@
 /**
+ * @TODO
  * should extend EventEmitter
  * store.on('event', saveToStorageEngine);
  * could also use batched saving
@@ -9,8 +10,8 @@ class EventStore {
     this.history = [];
   }
 
-  add(event, params) {
-    this.history.push({ event, params });
+  add({ channel, id, timestamp }) {
+    this.history.push({ channel, id, timestamp });
   }
 }
 

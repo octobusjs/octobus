@@ -22,7 +22,7 @@ class SubscribersList {
       (nextMessage) => this.doRun(nextMessage, subscribers) :
       undefined;
 
-    return subscriber.handle({
+    return subscriber.run({
       next, message,
     });
   }

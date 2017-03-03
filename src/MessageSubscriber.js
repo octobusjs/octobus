@@ -22,7 +22,7 @@ class MessageSubscriber {
     this.decorators.push(decorator);
   }
 
-  handle(args) {
+  run(args) {
     let resolve;
     let reject;
 
