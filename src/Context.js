@@ -7,8 +7,8 @@ class Context {
     this.next = undefined;
   }
 
-  lookup(path) {
-    return new Proxy({}, {
+  lookup = (path) => (
+    new Proxy({}, {
       get(target, methodName) {
         return (params) => {
           const channel = `${path}.${methodName}`;
@@ -16,7 +16,15 @@ class Context {
           return this.broker.send(message);
         };
       },
+    })
+  )
+
+  send = (message) => {
+    Object.assign(message, {
+      parentId: this.message.id,
     });
+
+    return this.broker.send(message);
   }
 }
 
