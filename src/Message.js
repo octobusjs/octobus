@@ -2,8 +2,8 @@ import pick from 'lodash/pick';
 import uuid from 'uuid/v1';
 
 class Message {
-  constructor(channel, data, parentId) {
-    this.channel = channel;
+  constructor(topic, data, parentId) {
+    this.topic = topic;
     this.data = data;
     this.parentId = parentId;
     this.timestamp = Date.now();
@@ -11,7 +11,7 @@ class Message {
   }
 
   toJSON() {
-    return pick(this, ['channel', 'data', 'id']);
+    return pick(this, ['topic', 'data', 'id']);
   }
 }
 

@@ -7,8 +7,8 @@ class MessageBroker {
     this.transport = transport;
 
     this.transport.onMessage(async (message) => {
-      const { channel, id } = message;
-      if (!this.subscribers[channel]) {
+      const { topic, id } = message;
+      if (!this.subscribers[topic]) {
         return;
       }
 
@@ -17,26 +17,26 @@ class MessageBroker {
         broker: this,
       });
 
-      const result = await this.subscribers[channel].run(context);
+      const result = await this.subscribers[topic].run(context);
 
       this.transport.reply({ id, result });
     });
   }
 
-  subscribe(channel, subscriber) {
-    if (!this.subscribers[channel]) {
-      this.subscribers[channel] = new SubscribersStore();
+  subscribe(topic, subscriber) {
+    if (!this.subscribers[topic]) {
+      this.subscribers[topic] = new SubscribersStore();
     }
 
-    this.subscribers[channel].add(subscriber);
+    this.subscribers[topic].add(subscriber);
 
-    return () => this.subscribers[channel].remove(subscriber);
+    return () => this.subscribers[topic].remove(subscriber);
   }
 
   send(message) {
-    if (!this.subscribers[message.channel]) {
+    if (!this.subscribers[message.topic]) {
       return Promise.reject(
-        new Error(`No subscribers registered for the ${message.channel} channel.`)
+        new Error(`No subscribers registered for the ${message.topic} topic.`)
       );
     }
 

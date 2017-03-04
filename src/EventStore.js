@@ -10,8 +10,8 @@ class EventStore {
     this.history = [];
   }
 
-  add({ channel, id, timestamp }) {
-    this.history.push({ channel, id, timestamp });
+  add({ topic, id, timestamp }) {
+    this.history.push({ topic, id, timestamp });
   }
 }
 
