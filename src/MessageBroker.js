@@ -1,20 +1,31 @@
-import SubscribersList from './SubscribersList';
-import Message from './Message';
+import SubscribersStore from './SubscribersStore';
+import Context from './Context';
 
 class MessageBroker {
   constructor(transport) {
     this.subscribers = {};
     this.transport = transport;
 
-    this.transport.onMessage(async ({ channel, data, id }) => {
-      const result = await this.subscribers[channel].run(data);
+    this.transport.onMessage(async (message) => {
+      const { channel, id } = message;
+      if (!this.subscribers[channel]) {
+        return;
+      }
+
+      const context = new Context({
+        message,
+        broker: this,
+      });
+
+      const result = await this.subscribers[channel].run(context);
+
       this.transport.reply({ id, result });
     });
   }
 
   subscribe(channel, subscriber) {
     if (!this.subscribers[channel]) {
-      this.subscribers[channel] = new SubscribersList();
+      this.subscribers[channel] = new SubscribersStore();
     }
 
     this.subscribers[channel].add(subscriber);
@@ -22,28 +33,14 @@ class MessageBroker {
     return () => this.subscribers[channel].remove(subscriber);
   }
 
-  send(channel, data) {
-    if (!this.subscribers[channel]) {
-      return Promise.reject(new Error(`No subscribers registered for the ${channel} channel.`));
+  send(message) {
+    if (!this.subscribers[message.channel]) {
+      return Promise.reject(
+        new Error(`No subscribers registered for the ${message.channel} channel.`)
+      );
     }
 
-    const message = new Message(channel, data);
-
-    this.transport.send(message);
-
-    return new Promise((resolve, reject) => {
-      this.transport.onReply(({ id, result }) => {
-        if (id === message.id) {
-          resolve(result);
-        }
-      });
-
-      this.transport.onError(({ id, error }) => {
-        if (id === message.id) {
-          reject(error);
-        }
-      });
-    });
+    return this.transport.send(message);
   }
 }
 
