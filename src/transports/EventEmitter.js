@@ -21,7 +21,7 @@ class EventEmitter extends NodeEventEmitter {
 
   send(message) {
     const promise = new Promise((resolve, reject) => {
-      const onComplete = ({ id, result, error }) => {
+      const onReply = ({ id, result, error }) => {
         if (id !== message.id) {
           return;
         }
@@ -32,12 +32,10 @@ class EventEmitter extends NodeEventEmitter {
           resolve(result);
         }
 
-        this.removeListener('reply', onComplete);
-        this.removeListener('error', onComplete);
+        this.removeListener('reply', onReply);
       };
 
-      this.onReply(onComplete);
-      this.onError(onComplete);
+      this.onReply(onReply);
     });
 
     this.emit('message', message);

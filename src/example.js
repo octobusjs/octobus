@@ -1,14 +1,14 @@
 import MessageBroker from './MessageBroker';
-// import EventStore from './EventStore';
+import EventStore from './EventStore';
 import MessageSubscriber from './MessageSubscriber';
 import MessageTransport from './transports/EventEmitter';
 import Message from './Message';
 import range from 'lodash/range';
 
-// const store = new EventStore();
+const store = new EventStore();
 const transport = new MessageTransport();
 
-// transport.onMessage((message) => store.add(message));
+transport.onMessage((message) => store.add(message));
 // transport.onMessage((message) => {
 //   console.log(message);
 // });
@@ -20,11 +20,7 @@ broker.subscribe('say.something.else', new MessageSubscriber(
 ));
 
 broker.subscribe('say.something', new MessageSubscriber(
-  async ({ lookup, send }) => {
-    console.log(await lookup('say.something').else());
-    // console.log(await send(new Message('say.something.else')));
-    return 'Something!';
-  }
+  async ({ lookup }) => lookup('say.something').else()
 ));
 
 broker.subscribe('say.hello', new MessageSubscriber(
@@ -47,15 +43,15 @@ const run = async () => {
   const start = Date.now();
 
   Promise.all(
-    range(1000).map(async () => {
+    range(100).map(async () => {
       const msg = new Message('say.hello', { name: 'John' });
       const answer = await broker.send(msg);
       // console.log(answer); // eslint-disable-line
       return answer;
     })
   ).then(() => {
-    console.log(Date.now() - start);
+    console.log(Date.now() - start); // eslint-disable-line
   });
 };
 
-run();
+setTimeout(run, 0);

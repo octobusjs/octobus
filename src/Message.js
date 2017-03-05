@@ -1,5 +1,5 @@
 import pick from 'lodash/pick';
-import uuid from 'uuid/v1';
+import uuid from 'uuid';
 
 class Message {
   constructor(topic, data, parentId) {
@@ -7,7 +7,7 @@ class Message {
     this.data = data;
     this.parentId = parentId;
     this.timestamp = Date.now();
-    this.id = uuid();
+    this.id = uuid.v1();
   }
 
   toJSON() {

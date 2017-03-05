@@ -22,12 +22,45 @@ class MessageSubscriber {
     this.decorators.push(decorator);
   }
 
-  run(args) {
-    const handler = this.decorators.length ?
+  getDecoratedHandler() {
+    return this.decorators.length ?
       flow(this.decorators.reverse())(this.handler) :
       this.handler;
+  }
 
-    return Promise.resolve(handler(args));
+  async run(args) {
+    let resolve;
+    let reject;
+
+    const promise = new Promise((_resolve, _reject) => {
+      resolve = _resolve;
+      reject = _reject;
+    });
+
+    const handleResult = MessageSubscriber.createOneTimeCallable((result) => {
+      if (result instanceof Error) {
+        reject(result);
+      } else {
+        resolve(result);
+      }
+    }, 'The result was already handled!');
+
+    const handler = this.getDecoratedHandler();
+
+    try {
+      const result = await Promise.resolve(handler({
+        ...args,
+        reply: handleResult,
+      }));
+
+      if (result !== undefined) {
+        handleResult(result);
+      }
+    } catch (err) {
+      handleResult(err);
+    }
+
+    return promise;
   }
 }
 

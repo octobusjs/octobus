@@ -1,13 +1,13 @@
-import Octobus from './Octobus';
-import OctobusWithLogger from './OctobusWithLogger';
-import * as decorators from './decorators';
-import Event from './Event';
-import { applyDecorators } from './utils';
+import Message from './Message';
+import MessageBroker from './MessageBroker';
+import EventStore from './EventStore';
+import MessageSubscriber from './MessageSubscriber';
+import MessageTransport from './transports/EventEmitter';
 
 export {
-  Octobus as default,
-  OctobusWithLogger,
-  decorators,
-  Event,
-  applyDecorators,
+  Message,
+  MessageBroker,
+  EventStore,
+  MessageSubscriber,
+  MessageTransport,
 };

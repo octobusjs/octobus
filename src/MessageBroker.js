@@ -17,9 +17,12 @@ class MessageBroker {
         broker: this,
       });
 
-      const result = await this.subscribers[topic].run(context);
-
-      this.transport.reply({ id, result });
+      try {
+        const result = await this.subscribers[topic].run(context);
+        this.transport.reply({ id, result });
+      } catch (error) {
+        this.transport.reply({ id, error });
+      }
     });
   }
 
