@@ -14,18 +14,35 @@ transport.onMessage((message) => store.add(message));
 // });
 
 const broker = new MessageBroker(transport);
+const broker2 = new MessageBroker(transport);
 
-broker.subscribe('say.something.else', new Handler(
-  () => 'Something else!'
+broker2.subscribe('say.something.else', new Handler(
+  ({ reply }) => {
+    reply('Something else!');
+  }
 ));
 
 broker.subscribe('say.something', new Handler(
-  async ({ lookup }) => lookup('say.something').else()
+  async () => { // eslint-disable-line
+    // try {
+    //   const result = await lookup('say.something').else();
+    //   console.log(result);
+    //   return result;
+    // } catch (err) {
+    //   console.log(err);
+    //   throw err;
+    // }
+    return transport.send(new Message({ topic: 'say.something.else' }));
+  }
 ));
 
 broker.subscribe('say.hello', new Handler(
   async ({ message, send }) => {
-    await send(new Message({ topic: 'say.something' }));
+    try {
+      await send(new Message({ topic: 'say.something' }));
+    } catch (e) {
+      console.log(e);
+    }
     return `${message.data.msg}!`;
   },
 ));
@@ -54,4 +71,10 @@ const run = async () => {
   });
 };
 
-setTimeout(run, 0);
+setTimeout(async () => {
+  try {
+    await run();
+  } catch (err) {
+    console.log(err); // eslint-disable-line
+  }
+}, 0);

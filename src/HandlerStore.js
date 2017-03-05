@@ -1,4 +1,4 @@
-class SubscribersStore {
+class HandlerStore {
   constructor(items = []) {
     this.items = items;
   }
@@ -16,20 +16,20 @@ class SubscribersStore {
     return this.doRun(context, [].concat(this.items));
   }
 
-  doRun = (context, subscribers) => {
-    const subscriber = subscribers.shift();
+  doRun = (context, handlers) => {
+    const handler = handlers.shift();
 
-    if (subscribers.length) {
+    if (handlers.length) {
       Object.assign(context, {
         next: (data) => {
           Object.assign(context.message.data, data);
-          return this.doRun(context, subscribers);
+          return this.doRun(context, handlers);
         },
       });
     }
 
-    return subscriber.run(context);
+    return handler.run(context);
   }
 }
 
-export default SubscribersStore;
+export default HandlerStore;

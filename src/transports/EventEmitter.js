@@ -20,7 +20,7 @@ class EventEmitter extends NodeEventEmitter {
   }
 
   send(message) {
-    let ret;
+    let ret = Promise.resolve(true);
 
     if (message.acknowledge) {
       ret = new Promise((resolve, reject) => {
@@ -45,6 +45,14 @@ class EventEmitter extends NodeEventEmitter {
     this.emit('message', message);
 
     return ret;
+  }
+
+  publish(message) {
+    Object.assign(message, {
+      acknowledge: false,
+    });
+
+    return this.send(message);
   }
 
   reply(...args) {

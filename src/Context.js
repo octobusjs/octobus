@@ -8,13 +8,13 @@ class Context {
   }
 
   lookup = (path) => {
-    const broker = this._broker;
+    const send = this.send;
     return new Proxy({}, {
       get(target, methodName) {
         return (data) => {
           const topic = `${path}.${methodName}`;
           const message = new Message({ topic, data });
-          return broker.send(message);
+          return send(message);
         };
       },
     });

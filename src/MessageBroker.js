@@ -1,4 +1,4 @@
-import SubscribersStore from './SubscribersStore';
+import HandlerStore from './HandlerStore';
 import Context from './Context';
 
 class MessageBroker {
@@ -36,7 +36,7 @@ class MessageBroker {
 
   subscribe(topic, subscriber) {
     if (!this.subscribers[topic]) {
-      this.subscribers[topic] = new SubscribersStore();
+      this.subscribers[topic] = new HandlerStore();
     }
 
     this.subscribers[topic].add(subscriber);
@@ -45,13 +45,19 @@ class MessageBroker {
   }
 
   send(message) {
-    if (!this.subscribers[message.topic]) {
-      return Promise.reject(
-        new Error(`No subscribers registered for the ${message.topic} topic.`)
-      );
-    }
-
+    this._checkSubscribers(message.topic);
     return this.transport.send(message);
+  }
+
+  publish(message) {
+    this._checkSubscribers(message.topic);
+    return this.transport.publish(message);
+  }
+
+  _checkSubscribers(topic) {
+    if (!this.subscribers[topic]) {
+      throw new Error(`No subscribers registered for the ${topic} topic.`);
+    }
   }
 }
 
