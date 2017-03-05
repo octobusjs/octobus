@@ -60,7 +60,7 @@ const run = async () => {
   const start = Date.now();
 
   Promise.all(
-    range(100).map(async () => {
+    range(1000).map(async () => {
       const msg = new Message({ topic: 'say.hello', data: { name: 'John' } });
       const answer = await broker.send(msg);
       // console.log(answer); // eslint-disable-line

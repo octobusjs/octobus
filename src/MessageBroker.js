@@ -2,9 +2,10 @@ import HandlerStore from './HandlerStore';
 import Context from './Context';
 
 class MessageBroker {
-  constructor(transport) {
+  constructor(transport, forwardPatterns = []) {
     this.subscribers = {};
     this.transport = transport;
+    this.forwardPatterns = forwardPatterns;
 
     this.transport.onMessage(async (message) => {
       const { topic, id } = message;
@@ -34,6 +35,10 @@ class MessageBroker {
     });
   }
 
+  addForwardPattern(pattern) {
+    this.forwardPatterns.push(pattern);
+  }
+
   subscribe(topic, subscriber) {
     if (!this.subscribers[topic]) {
       this.subscribers[topic] = new HandlerStore();
@@ -45,17 +50,24 @@ class MessageBroker {
   }
 
   send(message) {
-    this._checkSubscribers(message.topic);
+    this.verifyTopic(message.topic);
     return this.transport.send(message);
   }
 
   publish(message) {
-    this._checkSubscribers(message.topic);
+    this.verifyTopic(message.topic);
     return this.transport.publish(message);
   }
 
-  _checkSubscribers(topic) {
-    if (!this.subscribers[topic]) {
+  isForwardable(topic) {
+    return this.forwardPatterns.some((pattern) => pattern.test(topic));
+  }
+
+  verifyTopic(topic) {
+    if (
+      !this.subscribers[topic] &&
+      !this.isForwardable(topic)
+    ) {
       throw new Error(`No subscribers registered for the ${topic} topic.`);
     }
   }

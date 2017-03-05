@@ -21,10 +21,7 @@ class HandlerStore {
 
     if (handlers.length) {
       Object.assign(context, {
-        next: (data) => {
-          Object.assign(context.message.data, data);
-          return this.doRun(context, handlers);
-        },
+        next: (data) => this.doRun(context.clone(data), handlers),
       });
     }
 

@@ -3,7 +3,7 @@ import Message from './Message';
 class Context {
   constructor({ message, broker }) {
     this.message = message;
-    this._broker = broker;
+    this.broker = broker;
     this.next = undefined;
   }
 
@@ -20,12 +20,13 @@ class Context {
     });
   }
 
-  send = (message) => {
-    Object.assign(message, {
-      parentId: this.message.id,
-    });
+  send = (message) => this.broker.send(this.message.fork(message.toJSON()))
 
-    return this._broker.send(message);
+  clone(data) {
+    return new Context({
+      message: this.message.fork({ data }),
+      broker: this.broker,
+    });
   }
 }
 
