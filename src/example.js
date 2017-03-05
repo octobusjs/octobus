@@ -25,7 +25,7 @@ broker.subscribe('say.something', new MessageSubscriber(
 
 broker.subscribe('say.hello', new MessageSubscriber(
   async ({ message, send }) => {
-    await send(new Message('say.something'));
+    await send(new Message({ topic: 'say.something' }));
     return `${message.data.msg}!`;
   },
 ));
@@ -43,8 +43,8 @@ const run = async () => {
   const start = Date.now();
 
   Promise.all(
-    range(100).map(async () => {
-      const msg = new Message('say.hello', { name: 'John' });
+    range(2000).map(async () => {
+      const msg = new Message({ topic: 'say.hello', data: { name: 'John' }, acknowledge: false });
       const answer = await broker.send(msg);
       // console.log(answer); // eslint-disable-line
       return answer;

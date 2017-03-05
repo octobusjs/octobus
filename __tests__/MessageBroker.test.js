@@ -11,7 +11,7 @@ describe('Octobus', () => {
 
   describe('returning a result', () => {
     it('using an arrow function', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         () => 'Hello, world!',
@@ -22,7 +22,7 @@ describe('Octobus', () => {
     });
 
     it('using reply', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         ({ reply }) => {
@@ -35,7 +35,7 @@ describe('Octobus', () => {
     });
 
     it('using async / await', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         async () => 'Hello, world!'
@@ -48,7 +48,7 @@ describe('Octobus', () => {
 
   describe('throwing errors', () => {
     it('when calling an unregistered service', () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
       const onResolve = jest.fn();
 
       return broker.send(msg).then(onResolve, (err) => {
@@ -60,7 +60,7 @@ describe('Octobus', () => {
     });
 
     it('using reply in handlers', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         ({ reply }) => reply(new Error('not working')),
@@ -75,7 +75,7 @@ describe('Octobus', () => {
     });
 
     it('using throw in handlers', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         () => {
@@ -92,7 +92,7 @@ describe('Octobus', () => {
     });
 
     it('using promises in handlers', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         () => Promise.reject(new Error('not working')),
@@ -107,7 +107,7 @@ describe('Octobus', () => {
     });
 
     it('when handling a result twice', async () => {
-      const msg = new Message('say.hello');
+      const msg = new Message({ topic: 'say.hello' });
 
       broker.subscribe('say.hello', new MessageSubscriber(
         ({ reply }) => {
@@ -124,58 +124,68 @@ describe('Octobus', () => {
       }
     });
   });
-  //
-  // describe('handlers', () => {
-  //   it('should receive the options', () => {
-  //     dispatcher.subscribe('test', async (options) => {
-  //       expect(options.params).toBeDefined();
-  //       expect(options.event).toBeDefined();
-  //       expect(options.event instanceof Event).toBeTruthy();
-  //       expect(typeof options.dispatch).toBe('function');
-  //       expect(typeof options.lookup).toBe('function');
-  //       expect(typeof options.emit).toBe('function');
-  //       expect(typeof options.emitBefore).toBe('function');
-  //       expect(typeof options.emitAfter).toBe('function');
-  //       expect(typeof options.reply).toBe('function');
-  //     });
-  //
-  //     return dispatcher.dispatch('test', { hello: 'world' });
-  //   });
-  //
-  //   it('should receive the parameters', () => {
-  //     dispatcher.subscribe('test', async ({ params }) => {
-  //       expect(params).toEqual({ hello: 'world' });
-  //     });
-  //
-  //     return dispatcher.dispatch('test', { hello: 'world' });
-  //   });
-  //
-  //   describe('next parameter', () => {
-  //     it('next should be empty when there are no previously registered handlers', () => {
-  //       dispatcher.subscribe('test', async ({ next }) => {
-  //         expect(next).toBeUndefined();
-  //       });
-  //
-  //       return dispatcher.dispatch('test');
-  //     });
-  //
-  //     it('should call the previously registered handler', () => {
-  //       dispatcher.subscribe('test', () => 'it works');
-  //       dispatcher.subscribe('test', async ({ next }) => {
-  //         expect(next).toBeDefined();
-  //         try {
-  //           const result = await next();
-  //           expect(result).toBe('it works');
-  //         } catch (err) {
-  //           expect(err).toBeUndefined();
-  //         }
-  //       });
-  //
-  //       return dispatcher.dispatch('test');
-  //     });
-  //   });
-  // });
-  //
+
+  describe('handlers', () => {
+    it('should receive the options', () => {
+      const msg = new Message({ topic: 'test', acknowledge: false });
+
+      broker.subscribe('test', new MessageSubscriber(
+        (params) => {
+          expect(params.message).toBeDefined();
+          expect(params.message instanceof Message).toBeTruthy();
+          expect(typeof params.send).toBe('function');
+          expect(typeof params.lookup).toBe('function');
+          expect(typeof params.hasOwnProperty('next')).toBeTruthy();
+          expect(typeof params.reply).toBe('function');
+        },
+      ));
+
+      return broker.send(msg);
+    });
+
+    it('should receive the parameters', () => {
+      const msg = new Message({ topic: 'test', data: { hello: 'world' } });
+
+      broker.subscribe('test', new MessageSubscriber(
+        (params) => {
+          expect(params.message.data).toEqual({ hello: 'world' });
+          params.reply();
+        },
+      ));
+
+      return broker.send(msg);
+    });
+
+    describe('next parameter', () => {
+      it('next should be empty when there are no previously registered handlers', () => {
+        const msg = new Message({ topic: 'test', data: { hello: 'world' }, acknowledge: false });
+
+        broker.subscribe('test', new MessageSubscriber(
+          async ({ next }) => {
+            expect(next).toBeUndefined();
+          }
+        ));
+
+        return broker.send(msg);
+      });
+
+      // it('should call the previously registered handler', () => {
+      //   dispatcher.subscribe('test', () => 'it works');
+      //   dispatcher.subscribe('test', async ({ next }) => {
+      //     expect(next).toBeDefined();
+      //     try {
+      //       const result = await next();
+      //       expect(result).toBe('it works');
+      //     } catch (err) {
+      //       expect(err).toBeUndefined();
+      //     }
+      //   });
+      //
+      //   return dispatcher.dispatch('test');
+      // });
+    });
+  });
+
   // describe('handling events', () => {
   //   it('should throw an error when dispatching an invalid event', () => {
   //     expect(dispatcher.dispatch).toThrowError(/is required/i);

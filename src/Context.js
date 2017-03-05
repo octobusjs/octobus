@@ -11,9 +11,9 @@ class Context {
     const broker = this._broker;
     return new Proxy({}, {
       get(target, methodName) {
-        return (params) => {
+        return (data) => {
           const topic = `${path}.${methodName}`;
-          const message = new Message(topic, params);
+          const message = new Message({ topic, data });
           return broker.send(message);
         };
       },

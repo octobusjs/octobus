@@ -20,27 +20,31 @@ class EventEmitter extends NodeEventEmitter {
   }
 
   send(message) {
-    const promise = new Promise((resolve, reject) => {
-      const onReply = ({ id, result, error }) => {
-        if (id !== message.id) {
-          return;
-        }
+    let ret;
 
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
+    if (message.acknowledge) {
+      ret = new Promise((resolve, reject) => {
+        const onReply = ({ id, result, error }) => {
+          if (id !== message.id) {
+            return;
+          }
 
-        this.removeListener('reply', onReply);
-      };
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
 
-      this.onReply(onReply);
-    });
+          this.removeListener('reply', onReply);
+        };
+
+        this.onReply(onReply);
+      });
+    }
 
     this.emit('message', message);
 
-    return promise;
+    return ret;
   }
 
   reply(...args) {

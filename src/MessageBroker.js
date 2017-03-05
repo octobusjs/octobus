@@ -17,11 +17,19 @@ class MessageBroker {
         broker: this,
       });
 
-      try {
-        const result = await this.subscribers[topic].run(context);
-        this.transport.reply({ id, result });
-      } catch (error) {
-        this.transport.reply({ id, error });
+      if (message.acknowledge) {
+        try {
+          const result = await this.subscribers[topic].run(context);
+          this.transport.reply({ id, result });
+        } catch (error) {
+          this.transport.reply({ id, error });
+        }
+      } else {
+        try {
+          await this.subscribers[topic].run(context);
+        } catch (error) {
+          this.transport.emit('error', error);
+        }
       }
     });
   }
