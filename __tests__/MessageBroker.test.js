@@ -1,4 +1,4 @@
-import { Message, MessageBroker, MessageSubscriber, MessageTransport } from '../src';
+import { Message, MessageBroker, Handler, MessageTransport } from '../src';
 
 describe('Octobus', () => {
   let transport;
@@ -13,7 +13,7 @@ describe('Octobus', () => {
     it('using an arrow function', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         () => 'Hello, world!',
       ));
 
@@ -24,7 +24,7 @@ describe('Octobus', () => {
     it('using reply', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         ({ reply }) => {
           reply('Hello, world!');
         },
@@ -37,7 +37,7 @@ describe('Octobus', () => {
     it('using async / await', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         async () => 'Hello, world!'
       ));
 
@@ -62,7 +62,7 @@ describe('Octobus', () => {
     it('using reply in handlers', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         ({ reply }) => reply(new Error('not working')),
       ));
 
@@ -77,7 +77,7 @@ describe('Octobus', () => {
     it('using throw in handlers', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         () => {
           throw new Error('not working');
         },
@@ -94,7 +94,7 @@ describe('Octobus', () => {
     it('using promises in handlers', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         () => Promise.reject(new Error('not working')),
       ));
 
@@ -109,7 +109,7 @@ describe('Octobus', () => {
     it('when handling a result twice', async () => {
       const msg = new Message({ topic: 'say.hello' });
 
-      broker.subscribe('say.hello', new MessageSubscriber(
+      broker.subscribe('say.hello', new Handler(
         ({ reply }) => {
           reply('hello!');
           return 'hello!';
@@ -129,7 +129,7 @@ describe('Octobus', () => {
     it('should receive the options', () => {
       const msg = new Message({ topic: 'test', acknowledge: false });
 
-      broker.subscribe('test', new MessageSubscriber(
+      broker.subscribe('test', new Handler(
         (params) => {
           expect(params.message).toBeDefined();
           expect(params.message instanceof Message).toBeTruthy();
@@ -146,7 +146,7 @@ describe('Octobus', () => {
     it('should receive the parameters', () => {
       const msg = new Message({ topic: 'test', data: { hello: 'world' } });
 
-      broker.subscribe('test', new MessageSubscriber(
+      broker.subscribe('test', new Handler(
         (params) => {
           expect(params.message.data).toEqual({ hello: 'world' });
           params.reply();
@@ -160,7 +160,7 @@ describe('Octobus', () => {
       it('next should be empty when there are no previously registered handlers', () => {
         const msg = new Message({ topic: 'test', data: { hello: 'world' }, acknowledge: false });
 
-        broker.subscribe('test', new MessageSubscriber(
+        broker.subscribe('test', new Handler(
           async ({ next }) => {
             expect(next).toBeUndefined();
           }

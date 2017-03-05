@@ -1,6 +1,6 @@
 import flow from 'lodash/flow';
 
-class MessageSubscriber {
+class Handler {
   static createOneTimeCallable(fn, errorMessage) {
     let called = false;
     return (...args) => {
@@ -13,8 +13,8 @@ class MessageSubscriber {
     };
   }
 
-  constructor(handler, decorators = []) {
-    this.handler = handler;
+  constructor(fn, decorators = []) {
+    this.fn = fn;
     this.decorators = decorators;
   }
 
@@ -24,8 +24,8 @@ class MessageSubscriber {
 
   getDecoratedHandler() {
     return this.decorators.length ?
-      flow(this.decorators.reverse())(this.handler) :
-      this.handler;
+      flow(this.decorators.reverse())(this.fn) :
+      this.fn;
   }
 
   async run(args) {
@@ -37,7 +37,7 @@ class MessageSubscriber {
       reject = _reject;
     });
 
-    const handleResult = MessageSubscriber.createOneTimeCallable((result) => {
+    const handleResult = Handler.createOneTimeCallable((result) => {
       if (result instanceof Error) {
         reject(result);
       } else {
@@ -64,4 +64,4 @@ class MessageSubscriber {
   }
 }
 
-export default MessageSubscriber;
+export default Handler;
