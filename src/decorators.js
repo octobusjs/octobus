@@ -2,64 +2,43 @@ import Joi from 'joi';
 import memoize from 'lodash/memoize';
 import isPlainObject from 'lodash/isPlainObject';
 
-export const withDefaultParams = (defaultParams) => (handler) => (args, cb) => {
-  const { params } = args;
-  const isMergeable = isPlainObject(defaultParams) && isPlainObject(params);
-  const processedParams = isMergeable ?
-    { ...defaultParams, ...params } :
-    (params || defaultParams);
+export const withDefaults = (defaults) => (handler) => (args) => {
+  const { data } = args.message;
+  const isMergeable = isPlainObject(defaults) && isPlainObject(data);
+  const finalData = isMergeable ?
+    { ...defaults, ...data } :
+    (data || defaults);
 
-  return handler({
-    ...args,
-    params: processedParams,
-  }, cb);
+  Object.assign(args.message, {
+    data: finalData,
+  });
+
+  return handler(args);
 };
 
-export const withSchema = (schema) => (handler) => (args, cb) => {
-  const { params } = args;
-  const processedParams = Joi.attempt(params, schema);
+export const withSchema = (schema) => (handler) => (args) => {
+  const { data } = args.message;
+  const validData = Joi.attempt(data, schema);
 
-  return handler({
-    ...args,
-    params: processedParams,
-  }, cb);
+  Object.assign(args.message, {
+    data: validData,
+  });
+
+  return handler(args);
 };
 
-export const withNamespace = (namespace) => (handler) => (args, cb) => {
-  const { dispatch } = args;
+export const withExtracts = (extracts) => (handler) => (args) => {
+  const { extract } = args;
 
-  return handler({
-    ...args,
-    dispatch: (event, params) => {
-      let namespacedEvent = namespace;
-      if (event) {
-        namespacedEvent += `.${event.toString().trim()}`;
-      }
-      return dispatch(namespacedEvent, params);
-    },
-  }, cb);
-};
-
-export const withLookups = (lookups) => (handler) => (args, cb) => {
-  const { lookup } = args;
-
-  const dispatches = Object.keys(lookups).reduce((ds, key) => ({
-    ...ds,
-    [key]: lookup(lookups[key]),
+  const pins = Object.keys(extracts).reduce((acc, key) => ({
+    ...acc,
+    [key]: extract(extracts[key]),
   }), {});
 
   return handler({
     ...args,
-    ...dispatches,
-  }, cb);
+    ...pins,
+  });
 };
 
-export const withHandler = (handler) => (args, cb) => {
-  const { params } = args;
-  return handler({
-    ...args,
-    ...params,
-  }, cb);
-};
-
-export const withMemoization = (handler) => memoize(handler, ({ params }) => params);
+export const withMemoization = (handler) => memoize(handler, ({ message }) => message.data);

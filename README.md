@@ -3,7 +3,7 @@
 [![travis build](https://img.shields.io/travis/viczam/octobus.svg)](https://travis-ci.org/viczam/octobus)
 
 
-Octobus is a javascript library that helps you keep your code modular by creating services that communicate with each other through well-defined messages.
+Octobus is a javascript library that helps you keep your code modular by creating services that communicate with each other through messages.
 
 ## Install
 
@@ -21,16 +21,23 @@ It is built on top of node's EventEmitter and it respects the open / closed prin
 - inheritance is great when used with good care; composition is even better.
 
 Requirements:
-- octobus.js requires node 6 because of its Proxy use
+- octobus.js requires node >= 6 because of its Proxy use
 
 ## How to use it:
 
-1) First you need to create a shareable instance of Octobus. You'll use it whenever you want to call a previously defined service.
-It's up to you how to name it, but here are some suggestions: dispatcher, eventDispatcher, eventBus, serviceLocator etc.
+1) First you need to create a MessageTransport instance. We use it to send message between publishers and subscribers.
 
 ```js
-import Octobus from 'octobus.js';
-const dispatcher = new Octobus();
+import { MessageTransport } from 'octobus';
+const transport = new MessageTransport();
+```
+
+2) We create message plugins and connect them to the transport.
+
+```js
+import { Plugin } from 'octobus';
+const plugin = new Plugin();
+plugin.connect(transport);
 ```
 
 2) You create your subscriptions. These are functions stored under a specific namespace (event name).
