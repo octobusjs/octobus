@@ -1,10 +1,10 @@
-import NodeEventEmitter from 'events';
+import EventEmitter from 'events';
 
 const consoleErrorHandler = (error) => {
   console.log(error); // eslint-disable-line no-console
 };
 
-class EventEmitter extends NodeEventEmitter {
+class Transport extends EventEmitter {
   constructor(errorHandler = consoleErrorHandler) {
     super();
     this.setMaxListeners(Infinity);
@@ -64,4 +64,4 @@ class EventEmitter extends NodeEventEmitter {
   }
 }
 
-export default EventEmitter;
+export default Transport;

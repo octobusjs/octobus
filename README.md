@@ -25,14 +25,14 @@ Requirements:
 
 ## How to use it:
 
-1) First you need to create a MessageTransport instance. We use it to send message between publishers and subscribers.
+1) First you need to create a Transport instance. We use it to send message between publishers and subscribers.
 
 ```js
-import { MessageTransport } from 'octobus';
-const transport = new MessageTransport();
+import { Transport } from 'octobus';
+const transport = new Transport();
 ```
 
-2) We create message plugins and connect them to the transport.
+2) We create plugins and connect them to the transport.
 
 ```js
 import { Plugin } from 'octobus';

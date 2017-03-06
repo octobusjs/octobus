@@ -1,11 +1,11 @@
-import { Message, Plugin, Handler, MessageTransport } from '../src';
+import { Message, Plugin, Handler, Transport } from '../src';
 
 describe('Octobus', () => {
   let transport;
   let plugin;
 
   beforeEach(() => {
-    transport = new MessageTransport();
+    transport = new Transport();
     plugin = new Plugin();
     plugin.connect(transport);
   });
