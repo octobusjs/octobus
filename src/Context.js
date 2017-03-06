@@ -20,7 +20,10 @@ class Context {
     });
   }
 
-  send = (message) => this.plugin.send(this.message.fork(message.toJSON()))
+  send = (...args) => {
+    const message = this.plugin.createMessage(...args);
+    return this.plugin.send(this.message.fork(message.toJSON()));
+  }
 
   clone(data) {
     return new Context({
