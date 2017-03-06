@@ -6,7 +6,8 @@ describe('Octobus', () => {
 
   beforeEach(() => {
     transport = new MessageTransport();
-    broker = new MessageBroker(transport);
+    broker = new MessageBroker();
+    broker.connect(transport);
   });
 
   describe('returning a result', () => {
@@ -133,7 +134,7 @@ describe('Octobus', () => {
           expect(params.message).toBeDefined();
           expect(params.message instanceof Message).toBeTruthy();
           expect(typeof params.send).toBe('function');
-          expect(typeof params.lookup).toBe('function');
+          expect(typeof params.extract).toBe('function');
           expect(typeof params.hasOwnProperty('next')).toBeTruthy();
           expect(typeof params.reply).toBe('function');
         },
@@ -190,25 +191,24 @@ describe('Octobus', () => {
   });
 
 
-  // describe('lookup', () => {
-  //   it('should lookup namespaces', () => {
-  //     dispatcher.subscribe('namespace.test', () => 'it works');
-  //     dispatcher.subscribe('namespace.test.secondary', () => 'it works again');
-  //
-  //     const ns = dispatcher.lookup('namespace');
-  //     const { test } = ns;
-  //
-  //     return Promise.all([
-  //       test().then((result) => {
-  //         expect(result).toBe('it works');
-  //       }),
-  //       ns['test.secondary']().then((result) => {
-  //         expect(result).toBe('it works again');
-  //       }),
-  //     ]);
-  //   });
-  // });
-  //
+  describe('extract', () => {
+    it('should extract namespaces', () => {
+      broker.subscribe('ns.test1', new Handler(() => 'works1'));
+      broker.subscribe('ns.test2', new Handler(() => 'works2'));
+
+      const ns = broker.extract('ns');
+
+      return Promise.all([
+        ns.test1().then((result) => {
+          expect(result).toBe('works1');
+        }),
+        ns.test2().then((result) => {
+          expect(result).toBe('works2');
+        }),
+      ]);
+    });
+  });
+
   // describe('unsubscribing', () => {
   //   it('should unsubscribe all handlers of a specific event', () => {
   //     const subscriber1 = jest.fn(() => true);

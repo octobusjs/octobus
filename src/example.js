@@ -13,11 +13,16 @@ transport.onMessage((message) => store.add(message));
 //   console.log(message);
 // });
 
-const broker = new MessageBroker(transport);
-const broker2 = new MessageBroker(transport);
+const broker = new MessageBroker();
+broker.connect(transport);
+const broker2 = new MessageBroker();
+broker2.connect(transport);
+
+let counter = 0;
 
 broker2.subscribe('say.something.else', new Handler(
   ({ reply }) => {
+    counter++;
     reply('Something else!');
   }
 ));
@@ -25,7 +30,7 @@ broker2.subscribe('say.something.else', new Handler(
 broker.subscribe('say.something', new Handler(
   async () => { // eslint-disable-line
     // try {
-    //   const result = await lookup('say.something').else();
+    //   const result = await extract('say.something').else();
     //   console.log(result);
     //   return result;
     // } catch (err) {
@@ -48,8 +53,8 @@ broker.subscribe('say.hello', new Handler(
 ));
 
 broker.subscribe('say.hello', new Handler(
-  ({ message, next, send, lookup }) => { // eslint-disable-line
-    // const User = lookup('user.User'); // eslint-disable-line
+  ({ message, next, send, extract }) => { // eslint-disable-line
+    // const User = extract('user.User'); // eslint-disable-line
     return next({
       msg: `Hello, ${message.data.name}`,
     });
@@ -60,14 +65,15 @@ const run = async () => {
   const start = Date.now();
 
   Promise.all(
-    range(1000).map(async () => {
+    range(100).map(async () => {
       const msg = new Message({ topic: 'say.hello', data: { name: 'John' } });
-      const answer = await broker.send(msg);
+      const answer = await broker.publish(msg);
       // console.log(answer); // eslint-disable-line
       return answer;
     })
   ).then(() => {
     console.log(Date.now() - start); // eslint-disable-line
+    console.log(counter);
   });
 };
 

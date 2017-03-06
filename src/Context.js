@@ -7,7 +7,7 @@ class Context {
     this.next = undefined;
   }
 
-  lookup = (path) => {
+  extract = (path) => {
     const send = this.send;
     return new Proxy({}, {
       get(target, methodName) {

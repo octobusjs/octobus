@@ -27,12 +27,12 @@ export const withSchema = (schema) => (handler) => (args) => {
   return handler(args);
 };
 
-export const withLookups = (lookups) => (handler) => (args) => {
-  const { lookup } = args;
+export const withExtracts = (extracts) => (handler) => (args) => {
+  const { extract } = args;
 
-  const pins = Object.keys(lookups).reduce((acc, key) => ({
+  const pins = Object.keys(extracts).reduce((acc, key) => ({
     ...acc,
-    [key]: lookup(lookups[key]),
+    [key]: extract(extracts[key]),
   }), {});
 
   return handler({
