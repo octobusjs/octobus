@@ -1,12 +1,12 @@
 import Message from './Message';
-import MessageBroker from './MessageBroker';
+import Plugin from './Plugin';
 import EventStore from './EventStore';
 import Handler from './Handler';
 import MessageTransport from './transports/EventEmitter';
 
 export {
   Message,
-  MessageBroker,
+  Plugin,
   EventStore,
   Handler,
   MessageTransport,

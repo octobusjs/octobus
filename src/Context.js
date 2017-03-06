@@ -1,9 +1,9 @@
 import Message from './Message';
 
 class Context {
-  constructor({ message, broker }) {
+  constructor({ message, plugin }) {
     this.message = message;
-    this.broker = broker;
+    this.plugin = plugin;
     this.next = undefined;
   }
 
@@ -20,12 +20,12 @@ class Context {
     });
   }
 
-  send = (message) => this.broker.send(this.message.fork(message.toJSON()))
+  send = (message) => this.plugin.send(this.message.fork(message.toJSON()))
 
   clone(data) {
     return new Context({
       message: this.message.fork({ data }),
-      broker: this.broker,
+      plugin: this.plugin,
     });
   }
 

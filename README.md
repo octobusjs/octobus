@@ -32,12 +32,12 @@ import { MessageTransport } from 'octobus';
 const transport = new MessageTransport();
 ```
 
-2) We create message brokers and connect them to the transport.
+2) We create message plugins and connect them to the transport.
 
 ```js
-import { MessageBroker } from 'octobus';
-const broker = new MessageBroker();
-broker.connect(transport);
+import { Plugin } from 'octobus';
+const plugin = new Plugin();
+plugin.connect(transport);
 ```
 
 2) You create your subscriptions. These are functions stored under a specific namespace (event name).

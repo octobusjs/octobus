@@ -4,7 +4,7 @@ import Message from './Message';
 import trimStart from 'lodash/trimStart';
 import Router from './Router';
 
-class MessageBroker {
+class Plugin {
   constructor(namespace = '', routes = []) {
     this.namespace = namespace;
     this.router = new Router();
@@ -104,9 +104,9 @@ class MessageBroker {
   createContext(message) {
     return new Context({
       message,
-      broker: this,
+      plugin: this,
     });
   }
 }
 
-export default MessageBroker;
+export default Plugin;
