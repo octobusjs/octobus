@@ -71,11 +71,3 @@ dispatch('foo', 'world').then((result) => {
   console.log(result); // Hello world!
 });
 ```
-
-## Related projects
-
-- https://github.com/viczam/octobus-mongodb
-- https://github.com/viczam/hapi-octobus
-- https://github.com/viczam/octobus-rethinkdb
-- https://github.com/viczam/octobus-memory-store
-- https://github.com/viczam/hb-user
