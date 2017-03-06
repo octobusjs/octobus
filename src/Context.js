@@ -28,6 +28,10 @@ class Context {
       broker: this.broker,
     });
   }
+
+  createMessage(params) {
+    return this.message.fork(params);
+  }
 }
 
 export default Context;

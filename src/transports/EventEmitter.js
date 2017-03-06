@@ -1,7 +1,11 @@
 import NodeEventEmitter from 'events';
 
+const consoleErrorHandler = (error) => {
+  console.log(error); // eslint-disable-line no-console
+};
+
 class EventEmitter extends NodeEventEmitter {
-  constructor(errorHandler = () => {}) {
+  constructor(errorHandler = consoleErrorHandler) {
     super();
     this.setMaxListeners(Infinity);
     this.on('error', errorHandler);

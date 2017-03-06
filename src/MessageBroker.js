@@ -1,11 +1,15 @@
 import HandlerStore from './HandlerStore';
 import Context from './Context';
 import Message from './Message';
+import trimStart from 'lodash/trimStart';
+import Router from './Router';
 
 class MessageBroker {
-  constructor(forwardPatterns = []) {
+  constructor(namespace = '', routes = []) {
+    this.namespace = namespace;
+    this.router = new Router();
+    this.router.addRoutes(routes);
     this.subscribers = {};
-    this.forwardPatterns = forwardPatterns.map((pattern) => new RegExp(pattern));
   }
 
   connect(transport) {
@@ -18,12 +22,6 @@ class MessageBroker {
     this.transport = null;
   }
 
-  addForwardPatterns(patterns) {
-    this.forwardPatterns.concat(
-      patterns.map((pattern) => new RegExp(pattern))
-    );
-  }
-
   subscribe(topic, subscriber) {
     if (!this.subscribers[topic]) {
       this.subscribers[topic] = new HandlerStore();
@@ -34,14 +32,16 @@ class MessageBroker {
     return () => this.subscribers[topic].remove(subscriber);
   }
 
+  trimNamespace(topic) {
+    return this.namespace ? topic.replace(new RegExp(`^${this.namespace}.`), '') : topic;
+  }
+
   send(message) {
-    this.verifyTopic(message.topic);
-    return this.transport.send(message);
+    return this.transport.send(this.handleOutgoingMessage(message));
   }
 
   publish(message) {
-    this.verifyTopic(message.topic);
-    return this.transport.publish(message);
+    return this.transport.publish(this.handleOutgoingMessage(message));
   }
 
   extract(path) {
@@ -57,24 +57,31 @@ class MessageBroker {
     });
   }
 
-  isForwardable(topic) {
-    return this.forwardPatterns.some((pattern) => pattern.test(topic));
-  }
+  handleOutgoingMessage(message) {
+    const { topic } = message;
+    const route = this.router.route(topic);
 
-  verifyTopic(topic) {
-    if (
-      !this.subscribers[topic] &&
-      !this.isForwardable(topic)
-    ) {
-      throw new Error(`No subscribers registered for the ${topic} topic.`);
+    if (route) {
+      return Object.assign(message, { topic: route });
     }
+
+    if (!this.subscribers[topic]) {
+      throw new Error(`Can't handle "${topic}" topic!`);
+    }
+
+    return Object.assign(message, {
+      topic: trimStart(`${this.namespace}.${message.topic}`, '.'),
+    });
   }
 
   handleIncomingMessage = async (message) => {
-    const { topic, id } = message;
-    if (!this.subscribers[topic] || this.isForwardable(topic)) {
+    const topic = this.trimNamespace(message.topic);
+
+    if (!this.subscribers[topic]) {
       return;
     }
+
+    const { id } = message;
 
     const context = this.createContext(message);
 

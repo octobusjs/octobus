@@ -55,7 +55,7 @@ describe('Octobus', () => {
         broker.send(msg);
       } catch (err) {
         expect(err).toBeDefined();
-        expect(err.message).toBe('No subscribers registered for the say.hello topic.');
+        expect(err.message).toBe('Can\'t handle "say.hello" topic!');
       }
     });
 
