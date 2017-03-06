@@ -35,6 +35,13 @@ class Plugin {
     return () => this.subscribers[topic].remove(handler);
   }
 
+  subscribeTree(prefix = '', tree) {
+    return Object.keys(tree).reduce((acc, method) => ({
+      ...acc,
+      [method]: this.subscribe(`${prefix}.${method}`, tree[method]),
+    }), {});
+  }
+
   trimNamespace(topic) {
     return this.namespace ? topic.replace(new RegExp(`^${this.namespace}.`), '') : topic;
   }
