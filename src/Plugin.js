@@ -1,3 +1,4 @@
+import Handler from './Handler';
 import HandlerStore from './HandlerStore';
 import Context from './Context';
 import Message from './Message';
@@ -23,25 +24,35 @@ class Plugin {
   }
 
   subscribe(topic, subscriber) {
+    const handler = this.createHandler(subscriber);
+
     if (!this.subscribers[topic]) {
       this.subscribers[topic] = new HandlerStore();
     }
 
-    this.subscribers[topic].add(subscriber);
+    this.subscribers[topic].add(handler);
 
-    return () => this.subscribers[topic].remove(subscriber);
+    return () => this.subscribers[topic].remove(handler);
   }
 
   trimNamespace(topic) {
     return this.namespace ? topic.replace(new RegExp(`^${this.namespace}.`), '') : topic;
   }
 
-  send(message) {
-    return this.transport.send(this.handleOutgoingMessage(message));
+  send(...args) {
+    return this.transport.send(
+      this.handleOutgoingMessage(
+        this.createMessage(...args)
+      )
+    );
   }
 
-  publish(message) {
-    return this.transport.publish(this.handleOutgoingMessage(message));
+  publish(...args) {
+    return this.transport.publish(
+      this.handleOutgoingMessage(
+        this.createMessage(...args)
+      )
+    );
   }
 
   extract(path) {
@@ -101,11 +112,36 @@ class Plugin {
     }
   }
 
+  createMessage(...args) {
+    let params = {};
+
+    if (typeof args[0] === 'string') {
+      params.topic = args[0];
+      params.data = args[1];
+    } else {
+      params = args[0];
+    }
+
+    if (params instanceof Message) {
+      return params;
+    }
+
+    return new Message(params);
+  }
+
   createContext(message) {
     return new Context({
       message,
       plugin: this,
     });
+  }
+
+  createHandler(fn) {
+    if (fn instanceof Handler) {
+      return fn;
+    }
+
+    return new Handler(fn);
   }
 }
 

@@ -12,13 +12,9 @@ describe('Octobus', () => {
 
   describe('returning a result', () => {
     it('using an arrow function', async () => {
-      const msg = new Message({ topic: 'say.hello' });
+      plugin.subscribe('say.hello', () => 'Hello, world!');
 
-      plugin.subscribe('say.hello', new Handler(
-        () => 'Hello, world!',
-      ));
-
-      const result = await plugin.send(msg);
+      const result = await plugin.send('say.hello');
       expect(result).toBe('Hello, world!');
     });
 
