@@ -3,6 +3,7 @@ import Plugin from './Plugin';
 import EventStore from './EventStore';
 import Handler from './Handler';
 import Transport from './Transport';
+import * as decorators from './decorators';
 
 export {
   Message,
@@ -10,4 +11,5 @@ export {
   EventStore,
   Handler,
   Transport,
+  decorators,
 };
