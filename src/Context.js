@@ -22,7 +22,7 @@ class Context {
 
   send = (...args) => {
     const message = this.plugin.createMessage(...args);
-    return this.plugin.send(this.message.fork(message.toJSON()));
+    return this.plugin.send(this.message.fork(message));
   }
 
   clone(data) {
@@ -30,10 +30,6 @@ class Context {
       message: this.message.fork({ data }),
       plugin: this.plugin,
     });
-  }
-
-  createMessage(params) {
-    return this.message.fork(params);
   }
 }
 

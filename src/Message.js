@@ -3,6 +3,10 @@ import uuid from 'uuid';
 
 class Message {
   constructor({ topic, data, parentId, id, acknowledge = true }) {
+    if (!topic) {
+      throw new Error('Topic is required when creating a new message!');
+    }
+
     this.topic = topic;
     this.data = data;
     this.parentId = parentId;
@@ -16,13 +20,18 @@ class Message {
   }
 
   fork(params = {}) {
-    return new Message({
-      topic: this.topic,
-      data: this.data,
-      parentId: this.id,
-      acknowledge: this.acknowledge,
-      ...params,
-    });
+    const message = params instanceof Message ?
+      params :
+      new Message({
+        topic: this.topic,
+        data: this.data,
+        acknowledge: this.acknowledge,
+        ...params,
+      });
+
+    message.parentId = this.id;
+
+    return message;
   }
 }
 
