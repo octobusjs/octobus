@@ -3,6 +3,7 @@ import Plugin from './Plugin';
 import EventStore from './EventStore';
 import Handler from './Handler';
 import ServiceBus from './ServiceBus';
+import Transport from './Transport';
 import * as decorators from './decorators';
 
 export {
@@ -12,4 +13,5 @@ export {
   Handler,
   ServiceBus,
   decorators,
+  Transport,
 };
