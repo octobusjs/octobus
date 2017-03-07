@@ -1,13 +1,13 @@
-import { Message, Plugin, Handler, Transport } from '../src';
+import { Message, Plugin, Handler, ServiceBus } from '../src';
 
 describe('Octobus', () => {
-  let transport;
+  let serviceBus;
   let plugin;
 
   beforeEach(() => {
-    transport = new Transport();
+    serviceBus = new ServiceBus();
     plugin = new Plugin();
-    plugin.connect(transport);
+    plugin.connect(serviceBus);
   });
 
   describe('returning a result', () => {

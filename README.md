@@ -25,19 +25,19 @@ Requirements:
 
 ## How to use it:
 
-1) First you need to create a Transport instance. We use it to send message between publishers and subscribers.
+1) First you need to create a ServiceBus instance. We use it to send message between publishers and subscribers.
 
 ```js
-import { Transport } from 'octobus';
-const transport = new Transport();
+import { ServiceBus } from 'octobus';
+const serviceBus = new ServiceBus();
 ```
 
-2) We create plugins and connect them to the transport.
+2) We create plugins and connect them to the serviceBus instance.
 
 ```js
 import { Plugin } from 'octobus';
 const plugin = new Plugin();
-plugin.connect(transport);
+plugin.connect(serviceBus);
 ```
 
 2) You create your subscriptions. These are functions stored under a specific namespace (event name).

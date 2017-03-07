@@ -2,7 +2,7 @@ import Message from './Message';
 import Plugin from './Plugin';
 import EventStore from './EventStore';
 import Handler from './Handler';
-import Transport from './Transport';
+import ServiceBus from './ServiceBus';
 import * as decorators from './decorators';
 
 export {
@@ -10,6 +10,6 @@ export {
   Plugin,
   EventStore,
   Handler,
-  Transport,
+  ServiceBus,
   decorators,
 };

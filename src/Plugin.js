@@ -13,14 +13,14 @@ class Plugin {
     this.subscribers = {};
   }
 
-  connect(transport) {
-    this.transport = transport;
-    this.transport.onMessage(this.handleIncomingMessage);
+  connect(serviceBus) {
+    this.serviceBus = serviceBus;
+    this.serviceBus.onMessage(this.handleIncomingMessage);
   }
 
   disconnect() {
-    this.transport.removeListener('message', this.handleIncomingMessage);
-    this.transport = null;
+    this.serviceBus.removeListener('message', this.handleIncomingMessage);
+    this.serviceBus = null;
   }
 
   subscribe(topic, subscriber) {
@@ -47,7 +47,7 @@ class Plugin {
   }
 
   send(...args) {
-    return this.transport.send(
+    return this.serviceBus.send(
       this.handleOutgoingMessage(
         this.createMessage(...args)
       )
@@ -55,7 +55,7 @@ class Plugin {
   }
 
   publish(...args) {
-    return this.transport.publish(
+    return this.serviceBus.publish(
       this.handleOutgoingMessage(
         this.createMessage(...args)
       )
@@ -92,7 +92,8 @@ class Plugin {
     });
   }
 
-  handleIncomingMessage = async (message) => {
+  handleIncomingMessage = async (msg) => {
+    const message = new Message(msg);
     const topic = this.trimNamespace(message.topic);
 
     if (!this.subscribers[topic]) {
@@ -106,15 +107,15 @@ class Plugin {
     if (message.acknowledge) {
       try {
         const result = await this.subscribers[topic].run(context);
-        this.transport.reply({ id, result });
+        this.serviceBus.reply({ id, result });
       } catch (error) {
-        this.transport.reply({ id, error });
+        this.serviceBus.reply({ id, error });
       }
     } else {
       try {
         await this.subscribers[topic].run(context);
       } catch (error) {
-        this.transport.emit('error', error);
+        this.serviceBus.emit('error', error);
       }
     }
   }
