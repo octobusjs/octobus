@@ -41,4 +41,13 @@ export const withExtracts = (extracts) => (handler) => (args) => {
   });
 };
 
+export const withData = (handler) => (args, cb) => {
+  const data = isPlainObject(args.message.data) ? args.message.data : {};
+
+  return handler({
+    ...data,
+    ...args,
+  }, cb);
+};
+
 export const withMemoization = (handler) => memoize(handler, ({ message }) => message.data);
