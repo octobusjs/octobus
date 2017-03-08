@@ -76,15 +76,12 @@ class Plugin {
   }
 
   handleOutgoingMessage(message) {
-    const { topic } = message;
-    const route = this.router.route(topic);
-
-    if (route) {
-      return Object.assign(message, { topic: route });
+    if (this.router.matches(message)) {
+      return this.router.transform(message);
     }
 
-    if (!this.subscribers[topic]) {
-      throw new Error(`Can't handle "${topic}" topic!`);
+    if (!this.subscribers[message.topic]) {
+      throw new Error(`Can't handle "${message.topic}" topic!`);
     }
 
     return Object.assign(message, {

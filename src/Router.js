@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import identity from 'lodash/identity';
 
 class Router {
   constructor() {
@@ -8,7 +7,7 @@ class Router {
 
   addRoute = (route) => {
     const { pattern, to } = Joi.attempt({
-      to: identity,
+      to: (message) => message.toJSON(),
       ...route,
     }, {
       pattern: Joi.alternatives().try([
@@ -38,22 +37,24 @@ class Router {
     return pattern.test(path);
   }
 
-  transform(transformer, path) {
-    if (typeof transformer === 'string') {
-      return transformer;
-    }
-
-    return transformer(path);
+  matches(message) {
+    return this.routes.find(({ pattern }) => this.test(pattern, message.topic));
   }
 
-  route(path) {
-    const route = this.routes.find(({ pattern }) => this.test(pattern, path));
+  transform(message) {
+    const route = this.routes.find(({ pattern }) => this.test(pattern, message.topic));
 
     if (!route) {
-      return false;
+      throw new Error(`No matching route for ${JSON.stringify(message.toJSON())}!`);
     }
 
-    return this.transform(route.to, path);
+    if (typeof route.to === 'string') {
+      return Object.assign(message, {
+        topic: route.to,
+      });
+    }
+
+    return message.clone(route.to(message));
   }
 }
 

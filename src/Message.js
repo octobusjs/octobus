@@ -33,6 +33,13 @@ class Message {
 
     return message;
   }
+
+  clone(params = {}) {
+    return new Message({
+      ...this.toJSON(),
+      ...params,
+    });
+  }
 }
 
 export default Message;
