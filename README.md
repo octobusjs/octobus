@@ -19,19 +19,18 @@ npm install octobus.js
 - inheritance is great when used with good care; composition is even better.
 
 Requirements:
-- octobus.js requires node >= 6 because of its Proxy use
+- octobus.js requires node >= 6 because of its Proxy use, node 7 is recommended.
 
 ## How to use it:
 
-1) First you need to create a ServiceBus instance. We use it to send message to services.
+1) First we need to create a ServiceBus instance. We use it to send message to services.
 
 ```js
 import { ServiceBus } from 'octobus.js';
 const serviceBus = new ServiceBus();
 ```
 
-2) We'll then create a plugin and connect it to our ServiceBus instance. Plugins are meant to handle portions of our
-business logic.
+2) We create a plugin and connect it to our ServiceBus instance. Plugins are meant to handle bits of our business logic.
 
 ```js
 import { Plugin } from 'octobus.js';
@@ -39,33 +38,16 @@ const plugin = new Plugin();
 plugin.connect(serviceBus);
 ```
 
-2) We li
+2) We create services, which are functions that can listen and act on a specific topic.
 
 ```js
-dispatcher.subscribe('foo', function(options, cb) {
-  var name = options.params;
-  cb(null, "Hello " + name + '!');
-});
+plugin.subscribe('say.hello', ({ message }) => `Hello, ${message.data.name}!`);
 ```
 
-3) Then you'll start dispatching events:
+3) Now we are able to send message to be handled by the services we previously defined.
 
 ```js
-dispatcher.dispatch('foo', 'world', (err, result) => {
-  console.log(result); // Hello world!
-});
-```
-
-Things are getting better when you start to leverage the new features ES6 provides (promises, async / await, arrow functions etc.).
-
-The same functionality from above can be written like this:
-
-```javascript
-const { dispatch, subscribe } = new Octobus();
-
-subscribe('foo', ({ params: name }) => `Hello ${name}!`);
-
-dispatch('foo', 'world').then((result) => {
-  console.log(result); // Hello world!
+plugin.send('say.hello', { name: 'John' }).then((result) => {
+  console.log(result); // should output "Hello, John!"
 });
 ```
