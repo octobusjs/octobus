@@ -1,8 +1,16 @@
 import Transport from './Transport';
 
 class ServiceBus {
-  constructor(transport = new Transport()) {
+  static defaultOptions = {
+    replyTimeout: 2000,
+  };
+
+  constructor(transport = new Transport(), options = {}) {
     this.transport = transport;
+    this.options = {
+      ...ServiceBus.defaultOptions,
+      ...options,
+    };
   }
 
   onMessage(handler) {
@@ -14,6 +22,7 @@ class ServiceBus {
 
     if (message.acknowledge) {
       ret = new Promise((resolve, reject) => {
+        let timeoutId;
         const onReply = ({ id, result, error }) => {
           if (id !== message.id) {
             return;
@@ -25,8 +34,17 @@ class ServiceBus {
             resolve(result);
           }
 
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+
           this.transport.removeListener('reply', onReply);
         };
+
+        timeoutId = setTimeout(() => { // eslint-disable-line prefer-const
+          this.transport.removeListener('reply', onReply);
+          reject(new Error(`Waiting too long for message id's "${message.id}" reply!`));
+        }, this.options.replyTimeout);
 
         this.transport.on('reply', onReply);
       });

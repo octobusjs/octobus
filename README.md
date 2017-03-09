@@ -11,8 +11,6 @@ Octobus is a javascript library that helps you keep your code modular by creatin
 npm install octobus.js
 ```
 
-It is built on top of node's EventEmitter and it respects the open / closed principle.
-
 ## Key principles:
 - functions with named arguments are preferred to functions with positional arguments
 - promises are better than callbacks (they help you get rid of callback hell)
@@ -25,23 +23,23 @@ Requirements:
 
 ## How to use it:
 
-1) First you need to create a ServiceBus instance. We use it to send message between publishers and subscribers.
+1) First you need to create a ServiceBus instance. We use it to send message to services.
 
 ```js
-import { ServiceBus } from 'octobus';
+import { ServiceBus } from 'octobus.js';
 const serviceBus = new ServiceBus();
 ```
 
-2) We create plugins and connect them to the serviceBus instance.
+2) We'll then create a plugin and connect it to our ServiceBus instance. Plugins are meant to handle portions of our
+business logic.
 
 ```js
-import { Plugin } from 'octobus';
+import { Plugin } from 'octobus.js';
 const plugin = new Plugin();
 plugin.connect(serviceBus);
 ```
 
-2) You create your subscriptions. These are functions stored under a specific namespace (event name).
-The namespace matters, since you're going to use it when you call the function (service).
+2) We li
 
 ```js
 dispatcher.subscribe('foo', function(options, cb) {
