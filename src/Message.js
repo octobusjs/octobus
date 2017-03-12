@@ -1,11 +1,17 @@
+import Joi from 'joi';
 import pick from 'lodash/pick';
 import uuid from 'uuid';
 
 class Message {
-  constructor({ topic, data, parentId, id, timestamp, acknowledge = true }) {
-    if (!topic) {
-      throw new Error('Topic is required when creating a new message!');
-    }
+  constructor(args) {
+    const { topic, data, parentId, id, timestamp, acknowledge } = Joi.attempt(args || {}, {
+      topic: Joi.string().required(),
+      data: Joi.any(),
+      parentId: Joi.any(),
+      id: Joi.any(),
+      timestamp: Joi.number(),
+      acknowledge: Joi.boolean().default(true),
+    });
 
     this.topic = topic;
     this.data = data;

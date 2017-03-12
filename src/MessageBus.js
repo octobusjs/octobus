@@ -1,4 +1,5 @@
 import Transport from './Transport';
+import Message from './Message';
 
 class MessageBus {
   static defaultOptions = {
@@ -18,6 +19,12 @@ class MessageBus {
   }
 
   send(message) {
+    if (!(message instanceof Message)) {
+      throw new Error(
+        `message needs to be an instance of Message (got ${typeof message} instead)!`
+      );
+    }
+
     let ret = Promise.resolve(true);
 
     if (message.acknowledge) {
