@@ -23,31 +23,31 @@ Requirements:
 
 ## How to use it:
 
-1) First we need to create a ServiceBus instance. We use it to send message to services.
+1) First we need to create a MessageBus instance. We use it to send message to services.
+
+```js
+import { MessageBus } from 'octobus.js';
+const messageBus = new MessageBus();
+```
+
+2) We create a ServiceBus and connect it to our MessageBus instance. ServiceBus-es are meant to handle bits of our business logic.
 
 ```js
 import { ServiceBus } from 'octobus.js';
 const serviceBus = new ServiceBus();
-```
-
-2) We create a plugin and connect it to our ServiceBus instance. Plugins are meant to handle bits of our business logic.
-
-```js
-import { Plugin } from 'octobus.js';
-const plugin = new Plugin();
-plugin.connect(serviceBus);
+serviceBus.connect(messageBus);
 ```
 
 2) We create services, which are functions that can listen and act on a specific topic.
 
 ```js
-plugin.subscribe('say.hello', ({ message }) => `Hello, ${message.data.name}!`);
+serviceBus.subscribe('say.hello', ({ message }) => `Hello, ${message.data.name}!`);
 ```
 
 3) Now we are able to send message to be handled by the services we previously defined.
 
 ```js
-plugin.send('say.hello', { name: 'John' }).then((result) => {
+serviceBus.send('say.hello', { name: 'John' }).then((result) => {
   console.log(result); // should output "Hello, John!"
 });
 ```

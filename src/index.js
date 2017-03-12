@@ -1,17 +1,17 @@
 import Message from './Message';
-import Plugin from './Plugin';
+import ServiceBus from './ServiceBus';
 import EventStore from './EventStore';
 import Handler from './Handler';
-import ServiceBus from './ServiceBus';
+import MessageBus from './MessageBus';
 import Transport from './Transport';
 import * as decorators from './decorators';
 
 export {
   Message,
-  Plugin,
+  ServiceBus,
   EventStore,
   Handler,
-  ServiceBus,
+  MessageBus,
   decorators,
   Transport,
 };

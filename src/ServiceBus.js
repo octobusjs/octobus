@@ -1,70 +1,145 @@
-import Transport from './Transport';
+import Handler from './Handler';
+import HandlerStore from './HandlerStore';
+import Context from './Context';
+import Message from './Message';
+import trimStart from 'lodash/trimStart';
+import Router from './Router';
 
 class ServiceBus {
-  static defaultOptions = {
-    replyTimeout: 2000,
-  };
-
-  constructor(transport = new Transport(), options = {}) {
-    this.transport = transport;
-    this.options = {
-      ...ServiceBus.defaultOptions,
-      ...options,
-    };
+  constructor(namespace = '', routes = []) {
+    this.namespace = namespace;
+    this.router = new Router();
+    this.router.addRoutes(routes);
+    this.subscribers = {};
   }
 
-  onMessage(handler) {
-    this.transport.on('message', handler);
+  connect(messageBus) {
+    this.messageBus = messageBus;
+    this.messageBus.onMessage(this.handleIncomingMessage);
   }
 
-  send(message) {
-    let ret = Promise.resolve(true);
+  disconnect() {
+    this.messageBus.removeListener('message', this.handleIncomingMessage);
+    this.messageBus = null;
+  }
 
-    if (message.acknowledge) {
-      ret = new Promise((resolve, reject) => {
-        let timeoutId;
-        const onReply = ({ id, result, error }) => {
-          if (id !== message.id) {
-            return;
-          }
+  subscribe(topic, subscriber) {
+    const handler = this.createHandler(subscriber);
 
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-          }
-
-          this.transport.removeListener('reply', onReply);
-        };
-
-        timeoutId = setTimeout(() => { // eslint-disable-line prefer-const
-          this.transport.removeListener('reply', onReply);
-          reject(new Error(`Waiting too long for message id's "${message.id}" reply!`));
-        }, this.options.replyTimeout);
-
-        this.transport.on('reply', onReply);
-      });
+    if (!this.subscribers[topic]) {
+      this.subscribers[topic] = new HandlerStore();
     }
 
-    this.transport.emit('message', message.toJSON());
+    this.subscribers[topic].add(handler);
 
-    return ret;
+    return () => this.subscribers[topic].remove(handler);
   }
 
-  publish(message) {
-    Object.assign(message, {
-      acknowledge: false,
+  trimNamespace(topic) {
+    return this.namespace ? topic.replace(new RegExp(`^${this.namespace}.`), '') : topic;
+  }
+
+  send(...args) {
+    return this.messageBus.send(
+      this.handleOutgoingMessage(
+        this.createMessage(...args)
+      )
+    );
+  }
+
+  publish(...args) {
+    return this.messageBus.publish(
+      this.handleOutgoingMessage(
+        this.createMessage(...args)
+      )
+    );
+  }
+
+  extract(path) {
+    const send = this.send.bind(this);
+    return new Proxy({}, {
+      get(target, methodName) {
+        return (data) => {
+          const topic = `${path}.${methodName}`;
+          const message = new Message({ topic, data });
+          return send(message);
+        };
+      },
     });
-
-    return this.send(message);
   }
 
-  reply(...args) {
-    this.transport.emit('reply', ...args);
+  handleOutgoingMessage(message) {
+    if (this.router.matches(message)) {
+      return this.router.transform(message);
+    }
+
+    if (!this.subscribers[message.topic]) {
+      throw new Error(`Can't handle "${message.topic}" topic!`);
+    }
+
+    return Object.assign(message, {
+      topic: trimStart(`${this.namespace}.${message.topic}`, '.'),
+    });
+  }
+
+  handleIncomingMessage = async (msg) => {
+    const message = new Message(msg);
+    const topic = this.trimNamespace(message.topic);
+
+    if (!this.subscribers[topic]) {
+      return;
+    }
+
+    const { id } = message;
+
+    const context = this.createContext(message);
+
+    if (message.acknowledge) {
+      try {
+        const result = await this.subscribers[topic].run(context);
+        this.messageBus.reply({ id, result });
+      } catch (error) {
+        this.messageBus.reply({ id, error });
+      }
+    } else {
+      try {
+        await this.subscribers[topic].run(context);
+      } catch (error) {
+        this.messageBus.emit('error', error);
+      }
+    }
+  }
+
+  createMessage(...args) {
+    let params = {};
+
+    if (typeof args[0] === 'string') {
+      params.topic = args[0];
+      params.data = args[1];
+    } else {
+      params = args[0];
+    }
+
+    if (params instanceof Message) {
+      return params;
+    }
+
+    return new Message(params);
+  }
+
+  createContext(message) {
+    return new Context({
+      message,
+      plugin: this,
+    });
+  }
+
+  createHandler(fn) {
+    if (fn instanceof Handler) {
+      return fn;
+    }
+
+    return new Handler(fn);
   }
 }
 
