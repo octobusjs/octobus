@@ -4,6 +4,7 @@ import Context from './Context';
 import Message from './Message';
 import trimStart from 'lodash/trimStart';
 import Router from './Router';
+import { applyDecorators } from './utils';
 
 class ServiceBus {
   constructor(namespace = '', routes = []) {
@@ -33,6 +34,47 @@ class ServiceBus {
     this.subscribers[topic].add(handler);
 
     return () => this.subscribers[topic].remove(handler);
+  }
+
+  register(...args) {
+    let prefix;
+    let container;
+    if (args.length === 1) {
+      container = args[0];
+      prefix = container.constructor.name;
+    } else if (args.length === 2) {
+      prefix = args[0];
+      container = args[1];
+    }
+
+    for (const propr in container) {
+      if (
+        (typeof container[propr] === 'function') &&
+        container[propr].isService
+      ) {
+        const config = container[propr].serviceConfig;
+        const fn = container[propr];
+        let handler = ({ message, send }) => { // eslint-disable-line
+          return fn.call(new Proxy(container, {
+            get(target, methodName) {
+              if (!target[methodName].isService) {
+                return target[methodName];
+              }
+              return (params) => send(`${prefix}.${methodName}`, params);
+            },
+          }), message.data);
+        };
+
+        if (config.decorators.length) {
+          handler = applyDecorators(config.decorators, handler);
+        }
+
+        this.subscribe(`${prefix}.${config.name}`, handler);
+
+        container[propr] = (params) => this.send(`${prefix}.${propr}`, params);
+        container[propr].isService = true;
+      }
+    }
   }
 
   trimNamespace(topic) {

@@ -25,6 +25,11 @@ class Context {
     return this.plugin.send(this.message.fork(message));
   }
 
+  publish = (...args) => {
+    const message = this.plugin.createMessage(...args);
+    return this.plugin.publish(this.message.fork(message));
+  }
+
   clone(data) {
     return new Context({
       message: this.message.fork({ data }),

@@ -3,8 +3,8 @@ import pick from 'lodash/pick';
 import uuid from 'uuid';
 
 class Message {
-  constructor(args) {
-    const { topic, data, parentId, id, timestamp, acknowledge } = Joi.attempt(args || {}, {
+  constructor(args = {}) {
+    const { topic, data, parentId, id, timestamp, acknowledge } = Joi.attempt(args, {
       topic: Joi.string().required(),
       data: Joi.any(),
       parentId: Joi.any(),
