@@ -75,6 +75,8 @@ class ServiceBus {
         container[propr].isService = true;
       }
     }
+
+    return container;
   }
 
   trimNamespace(topic) {
