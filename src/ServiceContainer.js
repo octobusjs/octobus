@@ -1,5 +1,5 @@
 class ServiceContainer {
-  constructor(serviceBus) {
+  setServiceBus(serviceBus) {
     this.serviceBus = serviceBus;
   }
 

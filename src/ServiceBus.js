@@ -47,6 +47,10 @@ class ServiceBus {
       container = args[1];
     }
 
+    if (typeof container.setServiceBus === 'function') {
+      container.setServiceBus(this);
+    }
+
     for (const propr in container) {
       if (
         (typeof container[propr] === 'function') &&
@@ -54,15 +58,15 @@ class ServiceBus {
       ) {
         const config = container[propr].serviceConfig;
         const fn = container[propr];
-        let handler = ({ message, send }) => { // eslint-disable-line
+        let handler = (handlerArgs) => { // eslint-disable-line
           return fn.call(new Proxy(container, {
             get(target, methodName) {
               if (!target[methodName].isService) {
                 return target[methodName];
               }
-              return (params) => send(`${prefix}.${methodName}`, params);
+              return (params) => handlerArgs.send(`${prefix}.${methodName}`, params);
             },
-          }), message.data);
+          }), handlerArgs.message.data, handlerArgs);
         };
 
         if (config.decorators.length) {
