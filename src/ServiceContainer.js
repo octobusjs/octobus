@@ -12,7 +12,7 @@ class ServiceContainer {
   }
 
   extract(...args) {
-    return this.serviceBus.register(...args);
+    return this.serviceBus.extract(...args);
   }
 }
 
