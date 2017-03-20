@@ -7,6 +7,10 @@ import Router from './Router';
 import { applyDecorators } from './utils';
 
 class ServiceBus {
+  static isService(fn) {
+    return ((typeof fn === 'function') && fn.isService);
+  }
+
   constructor(namespace = '', routes = []) {
     this.namespace = namespace;
     this.router = new Router();
@@ -37,6 +41,7 @@ class ServiceBus {
   }
 
   register(...args) {
+    const { isService } = this.constructor;
     let prefix;
     let container;
     if (args.length === 1) {
@@ -52,16 +57,13 @@ class ServiceBus {
     }
 
     for (const propr in container) {
-      if (
-        (typeof container[propr] === 'function') &&
-        container[propr].isService
-      ) {
+      if (isService(container[propr])) {
         const config = container[propr].serviceConfig;
         const fn = container[propr];
         let handler = (handlerArgs) => { // eslint-disable-line
           return fn.call(new Proxy(container, {
             get(target, methodName) {
-              if (!target[methodName].isService) {
+              if (!isService(target[methodName])) {
                 return target[methodName];
               }
               return (params) => handlerArgs.send(`${prefix}.${methodName}`, params);
