@@ -4,9 +4,9 @@ import EventStore from './EventStore';
 import Handler from './Handler';
 import MessageBus from './MessageBus';
 import Transport from './Transport';
-import * as decorators from './decorators';
+import * as hoc from './hoc';
 import ServiceContainer from './ServiceContainer';
-import * as annotations from './annotations';
+import * as decorators from './decorators';
 import { applyDecorators } from './utils';
 
 export {
@@ -15,9 +15,9 @@ export {
   EventStore,
   Handler,
   MessageBus,
-  decorators,
+  hoc,
   Transport,
   ServiceContainer,
-  annotations,
+  decorators,
   applyDecorators,
 };
