@@ -4,13 +4,17 @@ import uuid from 'uuid';
 
 class Message {
   constructor(args = {}) {
-    const { topic, data, parentId, id, timestamp, acknowledge } = Joi.attempt(args, {
+    const {
+      topic, data, parentId, id, timestamp, acknowledge, result, error,
+    } = Joi.attempt(args, {
       topic: Joi.string().required(),
       data: Joi.any(),
       parentId: Joi.any(),
       id: Joi.any(),
       timestamp: Joi.number(),
       acknowledge: Joi.boolean().default(true),
+      result: Joi.any(),
+      error: Joi.object().type(Error),
     });
 
     this.topic = topic;
@@ -19,10 +23,14 @@ class Message {
     this.timestamp = timestamp || Date.now();
     this.id = id || uuid.v1();
     this.acknowledge = acknowledge;
+    this.result = result;
+    this.error = error;
   }
 
   toJSON() {
-    return pick(this, ['topic', 'data', 'parentId', 'id', 'timestamp', 'acknowledge']);
+    return pick(this, [
+      'topic', 'data', 'parentId', 'id', 'timestamp', 'acknowledge', 'result', 'error',
+    ]);
   }
 
   fork(params = {}) {

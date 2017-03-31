@@ -1,31 +1,59 @@
-import Transport from './Transport';
+import EventEmitter from 'events';
+import RealTimeTransport from './transports/RealTime';
+import TransportRouter from './routing/TransportRouter';
 import Message from './Message';
 
-class MessageBus {
+class MessageBus extends EventEmitter {
   static defaultOptions = {
     replyTimeout: 2000,
   };
 
-  constructor(transport = new Transport(), options = {}) {
-    this.transport = transport;
+  static createDefaultRouter(routes) {
+    return new TransportRouter(routes || [{
+      matcher: /.*/,
+      transport: new RealTimeTransport(),
+    }]);
+  }
+
+  constructor(router = MessageBus.createDefaultRouter(), options = {}) {
+    super();
+    this.setMaxListeners(Infinity);
+    this.router = router;
     this.options = {
       ...MessageBus.defaultOptions,
       ...options,
     };
+
+    this.router.getRoutes().forEach(({ transport }) => {
+      transport.onMessage((...args) => this.emit('message', ...args));
+    });
   }
 
   onMessage(handler) {
-    this.transport.on('message', handler);
+    this.on('message', handler);
+    return () => this.removeListener('message', handler);
   }
 
-  send(message) {
-    if (!(message instanceof Message)) {
+  routeMessage(rawMessage) {
+    const route = this.router.findRoute(rawMessage);
+    if (!route) {
+      throw new Error(`Unable to find matching route for topic "${rawMessage.topic}"`);
+    }
+    const { transport } = route;
+    const message = this.router.process(rawMessage);
+    return { transport, message };
+  }
+
+  send(rawMessage) {
+    if (!(rawMessage instanceof Message)) {
       throw new Error(
-        `message needs to be an instance of Message (got ${typeof message} instead)!`
+        `message needs to be an instance of Message (got ${typeof rawMessage} instead)!`
       );
     }
 
+    const { message, transport } = this.routeMessage(rawMessage);
     let ret = Promise.resolve(true);
+    let removeReplyListener;
 
     if (message.acknowledge) {
       ret = new Promise((resolve, reject) => {
@@ -45,19 +73,19 @@ class MessageBus {
             clearTimeout(timeoutId);
           }
 
-          this.transport.removeListener('reply', onReply);
+          removeReplyListener();
         };
 
         timeoutId = setTimeout(() => { // eslint-disable-line prefer-const
-          this.transport.removeListener('reply', onReply);
+          removeReplyListener();
           reject(new Error(`Waiting too long for message id's "${message.id}" reply!`));
         }, this.options.replyTimeout);
 
-        this.transport.on('reply', onReply);
+        removeReplyListener = transport.onReply(onReply);
       });
     }
 
-    this.transport.emit('message', message.toJSON());
+    transport.sendMessage(message.toJSON());
 
     return ret;
   }
@@ -70,8 +98,9 @@ class MessageBus {
     return this.send(message);
   }
 
-  reply(...args) {
-    this.transport.emit('reply', ...args);
+  reply(rawMessage) {
+    const { message, transport } = this.routeMessage(rawMessage);
+    transport.sendReply(message);
   }
 }
 

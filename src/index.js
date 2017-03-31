@@ -3,8 +3,8 @@ import ServiceBus from './ServiceBus';
 import EventStore from './EventStore';
 import Handler from './Handler';
 import MessageBus from './MessageBus';
-import Transport from './Transport';
-import * as hoc from './hoc';
+import * as transports from './transports';
+import * as hof from './hof';
 import ServiceContainer from './ServiceContainer';
 import * as decorators from './decorators';
 import { applyDecorators } from './utils';
@@ -15,8 +15,8 @@ export {
   EventStore,
   Handler,
   MessageBus,
-  hoc,
-  Transport,
+  hof,
+  transports,
   ServiceContainer,
   decorators,
   applyDecorators,

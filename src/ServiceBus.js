@@ -3,7 +3,7 @@ import HandlerStore from './HandlerStore';
 import Context from './Context';
 import Message from './Message';
 import trimStart from 'lodash/trimStart';
-import Router from './Router';
+import Router from './routing/Router';
 import { applyDecorators } from './utils';
 
 class ServiceBus {
@@ -20,11 +20,11 @@ class ServiceBus {
 
   connect(messageBus) {
     this.messageBus = messageBus;
-    this.messageBus.onMessage(this.handleIncomingMessage);
+    this.doDisconnect = this.messageBus.onMessage(this.handleIncomingMessage);
   }
 
   disconnect() {
-    this.messageBus.removeListener('message', this.handleIncomingMessage);
+    this.doDisconnect();
     this.messageBus = null;
   }
 
@@ -119,8 +119,8 @@ class ServiceBus {
   }
 
   handleOutgoingMessage(message) {
-    if (this.router.matches(message)) {
-      return this.router.transform(message);
+    if (this.router.findRoute(message)) {
+      return this.router.process(message);
     }
 
     if (!this.subscribers[message.topic]) {
@@ -140,17 +140,16 @@ class ServiceBus {
       return;
     }
 
-    const { id } = message;
-
     const context = this.createContext(message);
 
     if (message.acknowledge) {
       try {
-        const result = await this.subscribers[topic].run(context);
-        this.messageBus.reply({ id, result });
+        message.result = await this.subscribers[topic].run(context);
       } catch (error) {
-        this.messageBus.reply({ id, error });
+        message.error = error;
       }
+
+      this.messageBus.reply(message);
     } else {
       try {
         await this.subscribers[topic].run(context);
