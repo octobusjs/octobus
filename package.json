@@ -1,6 +1,6 @@
 {
   "name": "octobus.js",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "description": "An event dispatcher aimed for AOP.",
   "main": "dist/index.js",
   "scripts": {
@@ -26,6 +26,7 @@
   ],
   "files": [
     "dist",
+    "src",
     "README.md"
   ],
   "author": "Victor Zamfir <zamfir.victor@gmail.com>",
