@@ -20,7 +20,7 @@ const cpm = (cost, impressions) => {
 const cpm = (cost, impressions) => (cost / impressions) * 1000;
 ```
 
-If you are like me, you'll always forget the position of the parameters (does the cost come first?).
+If you are like me, you'll always forget the position of the parameters (does the cost argument come first?).
 
 PHP knows it better - http://phpsadness.com/sad/9 - positional parameters suck, so let's simulate named parameters:
 
@@ -28,8 +28,8 @@ PHP knows it better - http://phpsadness.com/sad/9 - positional parameters suck, 
 const cpm = ({ cost, impressions }) => (cost / impressions) * 1000;
 ```
 
-Cool, now let's say you published a library featuring your CPM calculator. But someone using it realizes he's getting infinite CPMs. It happens when you have 0 impressions - the CPM should be 0 too.
-He has to wrap your function and change all the calls to your function with his wrapped function:
+Cool, now let's say we published a library featuring our CPM calculator. But someone using it realizes he's getting infinite CPMs. It happens when we have zero impressions - the CPM should be zero too.
+He has to wrap our function and change all the calls to it with his wrapped version:
 
 
 ```js
@@ -39,87 +39,88 @@ export default ({ cost, impressions }) => impressions === 0 ? 0 : cpm({ cost, im
 ```
 
 He realizes there's more than that. The cost and impressions can't be negative numbers, while the impressions number has to be a natural number.
-But... you already worked hard on replacing the initial cpm calls with your version where you guard for 0 impressions.
+But... he already worked hard on replacing the initial cpm calls with his previous version.
 
-Let's try to do some of that using octobus.js.
+Let's see how octobus can help him in this case.
 
-First we need a dispatcher instance:
+First we need a MessageBus that will act as a central dispatcher of the messages we're about to send.
 
 ```js
-import Octobus from 'octobus.js';
-const dispatcher = new Octobus();
-const { dispatch, subscribe } = dispatcher;
+import { MessageBus } from 'octobus.js';
+const messageBus = new MessageBus();
 ```
 
-Now we can subscribe to message calls (dispatched events):
+While you can send messages through the messageBus directly, you'll want to use a ServiceBus most of the time especially because it gives you more control on the type of messages you can send, but it also provides a nicer way to subscribe and react to different messages.
 
 ```js
-subscribe('sayHello', (meta, cb) => {
-  cb(null, 'Hello!');
+import { ServiceBus } from 'octobus.js';
+const serviceBus = new ServiceBus();
+```
+
+The serviceBus needs to be connected to the messageBus instance to be able to send / receive messages.
+
+```js
+serviceBus.connect(messageBus);
+```
+
+Now we can subscribe to message topics:
+
+```js
+serviceBus.subscribe('say.hello', () => 'Hello, world!');
+```
+
+Let's try to send a message and see what happens:
+
+```js
+serviceBus.send('say.hello').then((result) => {
+  expect(result).toBe('Hello, world!');
 });
 ```
 
-And then you can dispatch events:
+Great, it worked.
+Now let's use use what we learned for our cpm calculation logic.
+First we need to be able to get access to the passed arguments. The handler receives the message (along with its data payload) in a special `message` named argument:
 
 ```js
-dispatch('sayHello', (err, result) => {
-  expect(err).to.be.null();
-  expect(result).to.equal('Hello!');
+serviceBus.subscribe('calculator.cpm', ({ message }) => {
+  const { data } = message;
+  return (data.cost / data.impressions) * 1000);
 });
 ```
 
-But callbacks are dead (wait.. no one hasn't written an article on that yet?). Let's use promises.
+And this is how you can send a message with a payload:
 
 ```js
-// here we can use a simple pure function since we don't have any side effects
-subscribe('sayHello', () => 'Hello!');
-
-// Dispatch calls always return promises.
-dispatch('sayHello').then((result) => {
-  expect(err).to.be.null();
-  expect(result).to.equal('Hello!');
-});
-```
-
-Let's use use what we learned for our cpm calculation logic.
-First we need to be able to get access to the passed arguments. The handler receives the parameters in a special `params` named parameter:
-
-```js
-subscribe('cpm', ({ params }) => (params.cost / params.impressions) * 1000);
-```
-
-You can go even further with destructuring assignment:
-
-```js
-subscribe('cpm', ({ params: { cost, impressions } }) => (cost / impressions) * 1000);
-```
-
-And this is how you can call it:
-
-```js
-dispatch('cpm', { cost: 22, impressions: 100 }).then((result) => {
+serviceBus.send('calculator.cpm', { cost: 22, impressions: 100 }).then((result) => {
   expect(result).to.equal(220);
 });
 ```
 
-It's better to keep your event names under specific namespaces.
-Some good examples:
-- `calculator.cpm`
-- `logger.error`
-- `math.sum`
-- `entity.User.findOne`
-
-Now let's say you want to get 0 as a result when the impressions number is 0. You can overwrite the previously defined service by creating another one with the same name:
+Now let's say you want to get 0 as a result when the impressions number is 0. You can overwrite the previously defined service by creating another under the same topic:
 
 ```js
-subscribe('calculator.cpm', ({ params: { cost, impressions } }) => impressions === 0 ? 0 : (cost / impressions) * 1000);
+serviceBus.subscribe('calculator.cpm', ({ message }) => {
+  const { cost, impressions } = message.data;
+
+  if (impressions === 0) {
+    return 0;
+  }
+
+  return (cost / impressions) * 1000);
+});
 ```
 
-But you might want to call the previously defined service, instead of overwriting it. You do that with a `next` function call, similar to `super` calls from class inheritance.
+But you might want to call the previously defined service, instead of copy-pasting the code. You do that with a `next` function call, similar to `super` calls from class inheritance.
 ```js
-subscribe('calculator.cpm',
-  ({ params: { cost, impressions }, next }) => impressions === 0 ? 0 : next({ cost, impressions })
-);
+serviceBus.subscribe('calculator.cpm', ({ message, next }) => {
+  const { cost, impressions } = message.data;
+
+  if (impressions === 0) {
+    return 0;
+  }
+
+  return next({ cost, impressions });
+});
 ```
 
 The destructuring under the `params` parameter looks confusing. Would be nice if we could have the parameters under the main object argument, like this:
