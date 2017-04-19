@@ -1,7 +1,6 @@
 import EventEmitter from 'events';
 import RealTimeTransport from './transports/RealTime';
 import TransportRouter from './routing/TransportRouter';
-import Message from './Message';
 
 class MessageBus extends EventEmitter {
   static defaultOptions = {
@@ -9,10 +8,14 @@ class MessageBus extends EventEmitter {
   };
 
   static createDefaultRouter(routes) {
-    return new TransportRouter(routes || [{
-      matcher: /.*/,
-      transport: new RealTimeTransport(),
-    }]);
+    return new TransportRouter(
+      routes || [
+        {
+          matcher: /.*/,
+          transport: new RealTimeTransport(),
+        },
+      ],
+    );
   }
 
   constructor(router = MessageBus.createDefaultRouter(), options = {}) {
@@ -45,18 +48,13 @@ class MessageBus extends EventEmitter {
   }
 
   send(rawMessage) {
-    if (!(rawMessage instanceof Message)) {
-      throw new Error(
-        `message needs to be an instance of Message (got ${typeof rawMessage} instead)!`
-      );
-    }
-
     const { message, transport } = this.routeMessage(rawMessage);
     let ret = Promise.resolve(true);
     let removeReplyListener;
 
     if (message.acknowledge) {
       ret = new Promise((resolve, reject) => {
+        // eslint-disable-next-line prefer-const
         let timeoutId;
         const onReply = ({ id, result, error }) => {
           if (id !== message.id) {
@@ -76,7 +74,7 @@ class MessageBus extends EventEmitter {
           removeReplyListener();
         };
 
-        timeoutId = setTimeout(() => { // eslint-disable-line prefer-const
+        timeoutId = setTimeout(() => {
           removeReplyListener();
           reject(new Error(`Waiting too long for message id's "${message.id}" reply!`));
         }, this.options.replyTimeout);
