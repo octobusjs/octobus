@@ -1,39 +1,42 @@
 import Message from './Message';
 
 class Context {
-  constructor({ message, plugin }) {
+  constructor({ message, serviceBus }) {
     this.message = message;
-    this.plugin = plugin;
+    this.serviceBus = serviceBus;
     this.next = undefined;
   }
 
-  extract = (path) => {
+  extract = path => {
     const send = this.send;
-    return new Proxy({}, {
-      get(target, methodName) {
-        return (data) => {
-          const topic = `${path}.${methodName}`;
-          const message = new Message({ topic, data });
-          return send(message);
-        };
+    return new Proxy(
+      {},
+      {
+        get(target, methodName) {
+          return data => {
+            const topic = `${path}.${methodName}`;
+            const message = new Message({ topic, data });
+            return send(message);
+          };
+        },
       },
-    });
-  }
+    );
+  };
 
   send = (...args) => {
-    const message = this.plugin.createMessage(...args);
-    return this.plugin.send(this.message.fork(message));
-  }
+    const message = this.serviceBus.createMessage(...args);
+    return this.serviceBus.send(this.message.fork(message));
+  };
 
   publish = (...args) => {
-    const message = this.plugin.createMessage(...args);
-    return this.plugin.publish(this.message.fork(message));
-  }
+    const message = this.serviceBus.createMessage(...args);
+    return this.serviceBus.publish(this.message.fork(message));
+  };
 
   clone(data) {
     return new Context({
       message: this.message.fork({ data }),
-      plugin: this.plugin,
+      serviceBus: this.serviceBus,
     });
   }
 }

@@ -8,7 +8,7 @@ import { applyDecorators } from './utils';
 
 class ServiceBus {
   static isService(fn) {
-    return ((typeof fn === 'function') && fn.isService);
+    return typeof fn === 'function' && fn.isService;
   }
 
   constructor(namespace = '', routes = []) {
@@ -60,15 +60,20 @@ class ServiceBus {
       if (isService(container[propr])) {
         const config = container[propr].serviceConfig;
         const fn = container[propr];
-        let handler = (handlerArgs) => { // eslint-disable-line
-          return fn.call(new Proxy(container, {
-            get(target, methodName) {
-              if (!isService(target[methodName])) {
-                return target[methodName];
-              }
-              return (params) => handlerArgs.send(`${prefix}.${methodName}`, params);
-            },
-          }), handlerArgs.message.data, handlerArgs);
+        // eslint-disable-next-line
+        let handler = handlerArgs => {
+          return fn.call(
+            new Proxy(container, {
+              get(target, methodName) {
+                if (!isService(target[methodName])) {
+                  return target[methodName];
+                }
+                return params => handlerArgs.send(`${prefix}.${methodName}`, params);
+              },
+            }),
+            handlerArgs.message.data,
+            handlerArgs,
+          );
         };
 
         if (config.decorators.length) {
@@ -77,7 +82,7 @@ class ServiceBus {
 
         this.subscribe(`${prefix}.${config.name}`, handler);
 
-        container[propr] = (params) => this.send(`${prefix}.${propr}`, params);
+        container[propr] = params => this.send(`${prefix}.${propr}`, params);
         container[propr].isService = true;
       }
     }
@@ -90,40 +95,35 @@ class ServiceBus {
   }
 
   send(...args) {
-    return this.messageBus.send(
-      this.handleOutgoingMessage(
-        this.createMessage(...args)
-      )
-    );
+    return this.messageBus.send(this.handleOutgoingMessage(this.createMessage(...args)));
   }
 
   publish(...args) {
-    return this.messageBus.publish(
-      this.handleOutgoingMessage(
-        this.createMessage(...args)
-      )
-    );
+    return this.messageBus.publish(this.handleOutgoingMessage(this.createMessage(...args), true));
   }
 
   extract(path) {
     const send = this.send.bind(this);
-    return new Proxy({}, {
-      get(target, methodName) {
-        return (data) => {
-          const topic = `${path}.${methodName}`;
-          const message = new Message({ topic, data });
-          return send(message);
-        };
+    return new Proxy(
+      {},
+      {
+        get(target, methodName) {
+          return data => {
+            const topic = `${path}.${methodName}`;
+            const message = new Message({ topic, data });
+            return send(message);
+          };
+        },
       },
-    });
+    );
   }
 
-  handleOutgoingMessage(message) {
+  handleOutgoingMessage(message, ignoreSubscribers = false) {
     if (this.router.findRoute(message)) {
       return this.router.process(message);
     }
 
-    if (!this.subscribers[message.topic]) {
+    if (!ignoreSubscribers && !this.subscribers[message.topic]) {
       throw new Error(`Can't handle "${message.topic}" topic!`);
     }
 
@@ -132,7 +132,7 @@ class ServiceBus {
     });
   }
 
-  handleIncomingMessage = async (msg) => {
+  handleIncomingMessage = async msg => {
     const message = new Message(msg);
     const topic = this.trimNamespace(message.topic);
 
@@ -157,7 +157,7 @@ class ServiceBus {
         this.messageBus.emit('error', error);
       }
     }
-  }
+  };
 
   createMessage(...args) {
     let params = {};
@@ -179,7 +179,7 @@ class ServiceBus {
   createContext(message) {
     return new Context({
       message,
-      plugin: this,
+      serviceBus: this,
     });
   }
 
