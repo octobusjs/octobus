@@ -23,9 +23,7 @@ class Handler {
   }
 
   getDecoratedHandler() {
-    return this.decorators.length ?
-      flow(this.decorators.reverse())(this.fn) :
-      this.fn;
+    return this.decorators.length ? flow(this.decorators.reverse())(this.fn) : this.fn;
   }
 
   async run(args) {
@@ -37,7 +35,7 @@ class Handler {
       reject = _reject;
     });
 
-    const handleResult = Handler.createOneTimeCallable((result) => {
+    const handleResult = Handler.createOneTimeCallable(result => {
       if (result instanceof Error) {
         reject(result);
       } else {
@@ -48,10 +46,12 @@ class Handler {
     const handler = this.getDecoratedHandler();
 
     try {
-      const result = await Promise.resolve(handler({
-        ...args,
-        reply: handleResult,
-      }));
+      const result = await Promise.resolve(
+        handler({
+          ...args,
+          reply: handleResult,
+        }),
+      );
 
       if (result !== undefined) {
         handleResult(result);

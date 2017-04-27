@@ -4,9 +4,7 @@ import uuid from 'uuid';
 
 class Message {
   constructor(args = {}) {
-    const {
-      topic, data, parentId, id, timestamp, acknowledge, result, error,
-    } = Joi.attempt(args, {
+    const { topic, data, parentId, id, timestamp, acknowledge, result, error } = Joi.attempt(args, {
       topic: Joi.string().required(),
       data: Joi.any(),
       parentId: Joi.any(),
@@ -29,14 +27,21 @@ class Message {
 
   toJSON() {
     return pick(this, [
-      'topic', 'data', 'parentId', 'id', 'timestamp', 'acknowledge', 'result', 'error',
+      'topic',
+      'data',
+      'parentId',
+      'id',
+      'timestamp',
+      'acknowledge',
+      'result',
+      'error',
     ]);
   }
 
   fork(params = {}) {
-    const message = params instanceof Message ?
-      params :
-      new Message({
+    const message = params instanceof Message
+      ? params
+      : new Message({
         topic: this.topic,
         data: this.data,
         acknowledge: this.acknowledge,

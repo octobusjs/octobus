@@ -9,7 +9,7 @@ class HandlerStore {
   }
 
   remove(item) {
-    this.items = this.items.filter((_item) => _item !== item);
+    this.items = this.items.filter(_item => _item !== item);
   }
 
   run(context) {
@@ -21,12 +21,12 @@ class HandlerStore {
 
     if (handlers.length) {
       Object.assign(context, {
-        next: (data) => this.doRun(context.clone(data), handlers),
+        next: data => this.doRun(context.clone(data), handlers),
       });
     }
 
     return handler.run(context);
-  }
+  };
 }
 
 export default HandlerStore;

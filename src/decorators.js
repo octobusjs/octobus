@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-const withSchema = (schema) => (target, propr, descriptor) => {
+const withSchema = schema => (target, propr, descriptor) => {
   const oldValue = descriptor.value;
 
   Object.assign(descriptor, {
@@ -24,7 +24,4 @@ const service = (config = {}) => (target, propr, descriptor) => {
   });
 };
 
-export {
-  service,
-  withSchema,
-};
+export { service, withSchema };
