@@ -128,7 +128,7 @@ The destructuring under the `params` parameter looks confusing. Would be nice if
 const handler = ({ cost, impressions, next }) => impressions === 0 ? 0 : next({ cost, impressions });
 ```
 
-You can actually do that using something called `decorators`. They decorate the handlers (using functions composition), and act as middlewares sitting between the dispatching and event and executing the handler's logic.
+You can actually do that using something called `decorators`. These are high-order functions for handlers, and act as middlewares sitting between the dispatching and event and executing the handler's logic.
 
 ```js
 import { decorators } from 'octobus.js';
