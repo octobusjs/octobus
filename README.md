@@ -3,7 +3,7 @@
 [![travis build](https://img.shields.io/travis/viczam/octobus.svg)](https://travis-ci.org/viczam/octobus)
 
 
-Octobus is a javascript library that helps you keep your code modular by creating services that communicate with each other through messages.
+Octobus is a javascript library that helps you keep your code modular and extensible by creating services that respond to messages.
 
 ## Install
 
@@ -18,8 +18,13 @@ npm install octobus.js
 - service functions (handlers) as first class citizens
 - inheritance is great when used with good care; composition is even better.
 
+## Motivation:
+- promotes high decoupling between the sender and the receiver of the message
+- logging and introspection of the messages
+- microservices friendly
+
 Requirements:
-- octobus.js requires node >= 6 because of its Proxy use, node 7 is recommended.
+- octobus.js requires node >= 6 because of its Proxy use.
 
 ## How to use it:
 
@@ -30,7 +35,7 @@ import { MessageBus } from 'octobus.js';
 const messageBus = new MessageBus();
 ```
 
-2) We create a ServiceBus and connect it to our MessageBus instance. ServiceBus-es are meant to handle bits of our business logic.
+2) We create a ServiceBus and connect it to our MessageBus instance. This service bus will proxy the message sending to the message bus and its main use is to group together handlers of a specific area of the business logic.
 
 ```js
 import { ServiceBus } from 'octobus.js';
