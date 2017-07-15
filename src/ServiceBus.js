@@ -72,7 +72,7 @@ class ServiceBus {
               },
             }),
             handlerArgs.message.data,
-            handlerArgs,
+            handlerArgs
           );
         };
 
@@ -114,7 +114,7 @@ class ServiceBus {
             return send(message);
           };
         },
-      },
+      }
     );
   }
 
@@ -160,20 +160,7 @@ class ServiceBus {
   };
 
   createMessage(...args) {
-    let params = {};
-
-    if (typeof args[0] === 'string') {
-      params.topic = args[0];
-      params.data = args[1];
-    } else {
-      params = args[0];
-    }
-
-    if (params instanceof Message) {
-      return params;
-    }
-
-    return new Message(params);
+    return args[0] instanceof Message ? args[0] : Message.create(...args);
   }
 
   createContext(message) {
@@ -184,11 +171,7 @@ class ServiceBus {
   }
 
   createHandler(fn) {
-    if (fn instanceof Handler) {
-      return fn;
-    }
-
-    return new Handler(fn);
+    return fn instanceof Handler ? fn : new Handler(fn);
   }
 }
 

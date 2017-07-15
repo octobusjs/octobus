@@ -1,6 +1,7 @@
 import EventEmitter from 'events';
 import RealTimeTransport from './transports/RealTime';
 import TransportRouter from './routing/TransportRouter';
+import Message from './Message';
 
 class MessageBus extends EventEmitter {
   static defaultOptions = {
@@ -14,7 +15,7 @@ class MessageBus extends EventEmitter {
           matcher: /.*/,
           transport: new RealTimeTransport(),
         },
-      ],
+      ]
     );
   }
 
@@ -37,19 +38,21 @@ class MessageBus extends EventEmitter {
     return () => this.removeListener('message', handler);
   }
 
-  routeMessage(rawMessage) {
-    const route = this.router.findRoute(rawMessage);
+  routeMessage(message) {
+    const route = this.router.findRoute(message);
     if (!route) {
-      throw new Error(`Unable to find matching route for topic "${rawMessage.topic}"`);
+      throw new Error(`Unable to find matching route for topic "${message.topic}"`);
     }
-    const { transport } = route;
-    const message = this.router.process(rawMessage);
-    return { transport, message };
+
+    return {
+      ...route,
+      message,
+    };
   }
 
   send(rawMessage) {
     const { message, transport } = this.routeMessage(rawMessage);
-    let ret = Promise.resolve(true);
+    let ret = Promise.resolve();
     let removeReplyListener;
 
     if (message.acknowledge) {
@@ -83,7 +86,7 @@ class MessageBus extends EventEmitter {
       });
     }
 
-    transport.sendMessage(message.toJSON());
+    transport.sendMessage(Message.serialize(message));
 
     return ret;
   }

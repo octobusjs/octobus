@@ -4,14 +4,17 @@ import Router from './Router';
 
 class TransportRouter extends Router {
   addRoute(route) {
-    return super.addRoute(Joi.attempt({
-      process: (message) => message.toJSON(),
-      ...route,
-    }, Joi.object().keys({
-      matcher: Joi.object().type(RegExp),
-      process: Joi.func(),
-      transport: Joi.object().type(Transport),
-    }).unknown()));
+    return super.addRoute(
+      Joi.attempt(
+        route,
+        Joi.object()
+          .keys({
+            matcher: Joi.object().type(RegExp),
+            transport: Joi.object().type(Transport),
+          })
+          .unknown()
+      )
+    );
   }
 }
 

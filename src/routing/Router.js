@@ -7,13 +7,14 @@ class Router {
   }
 
   addRoute(rawRoute) {
-    const route = Joi.attempt({
-      process: (message) => message.toJSON(),
-      ...rawRoute,
-    }, Joi.object().keys({
-      matcher: Joi.object().type(RegExp),
-      process: Joi.func(),
-    }).unknown());
+    const route = Joi.attempt(
+      rawRoute,
+      Joi.object()
+        .keys({
+          matcher: Joi.object().type(RegExp),
+        })
+        .unknown()
+    );
 
     this.routes.unshift(route);
 
@@ -30,11 +31,6 @@ class Router {
 
   findRoute(message) {
     return this.routes.find(({ matcher }) => matcher.test(message.topic));
-  }
-
-  process(message) {
-    const route = this.findRoute(message);
-    return route ? message.clone(route.process(message)) : message;
   }
 }
 
