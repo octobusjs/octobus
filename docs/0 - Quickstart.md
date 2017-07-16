@@ -200,3 +200,5 @@ Promise.all([
     console.log(err);
   });
 ```
+
+It's very common to have multiple ServiceBus instances in your app, which will handle different areas of your business logic.

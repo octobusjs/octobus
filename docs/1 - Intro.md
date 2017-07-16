@@ -40,10 +40,9 @@ export default ({ cost, impressions }) => impressions === 0 ? 0 : cpm({ cost, im
 
 Now he just needs to replace all existing calls with his wrapping service.
 
-But there's more than that. The cost and impressions can't be negative numbers, while the impressions number has to be a natural number.
-But... he already worked hard on replacing the initial cpm calls with its previous version.
+But there's more to it. The cost and impressions can't be negative numbers and the returned result has to be a number.
 
-Let's see how octobus can help him in this case.
+Let's see how we can mitigate all these issues with octobus.
 
 First we need a MessageBus instance, which will act as a central dispatcher of the messages we're about to send.
 
@@ -51,8 +50,6 @@ First we need a MessageBus instance, which will act as a central dispatcher of t
 import { MessageBus } from 'octobus.js';
 const messageBus = new MessageBus();
 ```
-
-
 
 While you can send messages through the messageBus directly, you'll want to use a ServiceBus most of the time especially because it gives you more control over the type of messages you can send, but it also provides a nicer way to subscribe and react to different messages.
 
@@ -77,7 +74,7 @@ Let's try to send a message and see what happens:
 
 ```js
 serviceBus.send('say.hello').then((result) => {
-  expect(result).toBe('Hello, world!');
+  assert.equal(result, 'Hello, world!')
 });
 ```
 
@@ -87,20 +84,20 @@ First we need to be able to get access to the passed arguments. The handler rece
 
 ```js
 serviceBus.subscribe('calculator.cpm', ({ message }) => {
-  const { data } = message;
-  return (data.cost / data.impressions) * 1000);
+  const { data } = message; // data is the actual payload that gets sent with the message
+  return (data.cost / data.impressions) * 1000;
 });
 ```
 
 And this is how you can send a message with a payload:
 
 ```js
-serviceBus.send('calculator.cpm', { cost: 22, impressions: 100 }).then((result) => {
-  expect(result).to.equal(220);
+serviceBus.send('calculator.cpm', { cost: 22, impressions: 100 }).then(result => {
+  assert.equal(result, 220);
 });
 ```
 
-Now let's say you want to get 0 as a result when the impressions number is 0. You can overwrite the previously defined service by creating another under the same topic:
+Now let's say you want to get 0 as a result when the impressions number is 0. You can overwrite the previously defined service by creating another one under the same topic:
 
 ```js
 serviceBus.subscribe('calculator.cpm', ({ message }) => {
@@ -110,7 +107,7 @@ serviceBus.subscribe('calculator.cpm', ({ message }) => {
     return 0;
   }
 
-  return (cost / impressions) * 1000);
+  return (cost / impressions) * 1000;
 });
 ```
 
@@ -132,13 +129,100 @@ The destructuring under the `params` parameter looks confusing. Would be nice if
 const handler = ({ cost, impressions, next }) => impressions === 0 ? 0 : next({ cost, impressions });
 ```
 
-You can actually do that using something called `decorators`. These are high-order functions for handlers, and act as middlewares sitting between the dispatching and event and executing the handler's logic.
+You can actually do that using one of the available high-order functions for service handlers. These act as middlewares between dispatching and event and executing the handler's logic.
 
 ```js
-import { decorators } from 'octobus.js';
+import { hof } from 'octobus.js';
 
-const { withHandler } = decorators;
+const { withData } = hof;
 
 // same as above
-subscribe('calculator.cpm', withHandler(handler));
+serviceBus.subscribe(
+  'calculator.cpm',
+  withData(({ cost, impressions, next }) => (impressions === 0 ? 0 : next({ cost, impressions })))
+);
+```
+
+Let's also make sure the cost and impressions are natural numbers. We'll use the awesome [Joi](https://github.com/hapijs/joi) validation library for that.
+
+Make sure you install the module first:
+```
+npm install joi
+```
+
+Now let's import the library and the `withSchema` high-order function that allows us to validate the parameters:
+
+```js
+import Joi from 'joi';
+import { MessageBus, ServiceBus, hof } from 'octobus.js';
+import assert from 'assert';
+
+const { withData, withSchema } = hof;
+const messageBus = new MessageBus();
+const serviceBus = new ServiceBus('calculator'); // we set the namespace to 'calculator'
+
+serviceBus.connect(messageBus);
+
+serviceBus.subscribe('cpm', ({ message }) => {
+  const { data } = message;
+  return data.cost / data.impressions * 1000;
+});
+
+const schema = { // actual schema
+  cost: Joi.number().integer().positive().required(),
+  impressions: Joi.number().integer().min(0).required(),
+};
+
+serviceBus.subscribe(
+  'cpm',
+  withSchema(schema)(
+    withData(({ cost, impressions, next }) => (impressions === 0 ? 0 : next({ cost, impressions })))
+  )
+);
+
+Promise.all([
+  serviceBus.send('cpm', { cost: 22, impressions: 0 }),
+  serviceBus.send('cpm', { cost: 22, impressions: 100 }),
+])
+  .then(results => {
+    assert.equal(results[0], 0);
+    assert.equal(results[1], 220);
+  })
+  .catch(err => console.log(err));
+```
+
+Let's also validate the result to make sure we always get a number greater than or equal to 0.
+
+```js
+const { withData, withSchema, withResultSchema } = hof;
+
+serviceBus.subscribe(
+  'cpm',
+  withResultSchema(Joi.number().min(0))(
+    withSchema({
+      cost: Joi.number().integer().positive().required(),
+      impressions: Joi.number().integer().min(0).required(),
+    })(
+      withData(
+        ({ cost, impressions, next }) => (impressions === 0 ? 0 : next({ cost, impressions }))
+      )
+    )
+  )
+);
+```
+
+If all these function calls look confusing, there's a way to make them more readable. In the end, it's just functions composition and that means we can use the `flow` helper from lodash for that, but octobus already comes with its own version of it.
+
+```js
+import { hof, compose } from 'octobus.js';
+
+const { withData, withSchema, withResultSchema } = hof;
+
+const decorate = compose(
+  withSchema(schema),
+  withResultSchema(Joi.number().min(0)),
+  withData
+);
+
+const finalHandler = decorate(handler);
 ```
