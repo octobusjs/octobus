@@ -28,9 +28,9 @@ PHP knows it better - http://phpsadness.com/sad/9 - positional parameters suck, 
 const cpm = ({ cost, impressions }) => (cost / impressions) * 1000;
 ```
 
-Cool, now let's say we published a library featuring our CPM calculator. But someone using it realizes he's getting infinite CPMs. It happens when we have zero impressions - the CPM should be zero too.
-He has to wrap our function and change all the calls to it with his wrapped version:
-
+Cool, now let's say we published a library featuring our CPM calculator. We get feedback about receiving bad values (infinite CPMs).
+After a quick look we realize that it happens when we have zero impressions - the returned CPM should be zero as well.
+Whoever is using our library decides to fix this issue by creating a wrapper over our existing service function.
 
 ```js
 import { cpm } from 'cpm-calculator';
@@ -38,19 +38,23 @@ import { cpm } from 'cpm-calculator';
 export default ({ cost, impressions }) => impressions === 0 ? 0 : cpm({ cost, impressions });
 ```
 
-He realizes there's more than that. The cost and impressions can't be negative numbers, while the impressions number has to be a natural number.
-But... he already worked hard on replacing the initial cpm calls with his previous version.
+Now he just needs to replace all existing calls with his wrapping service.
+
+But there's more than that. The cost and impressions can't be negative numbers, while the impressions number has to be a natural number.
+But... he already worked hard on replacing the initial cpm calls with its previous version.
 
 Let's see how octobus can help him in this case.
 
-First we need a MessageBus that will act as a central dispatcher of the messages we're about to send.
+First we need a MessageBus instance, which will act as a central dispatcher of the messages we're about to send.
 
 ```js
 import { MessageBus } from 'octobus.js';
 const messageBus = new MessageBus();
 ```
 
-While you can send messages through the messageBus directly, you'll want to use a ServiceBus most of the time especially because it gives you more control on the type of messages you can send, but it also provides a nicer way to subscribe and react to different messages.
+
+
+While you can send messages through the messageBus directly, you'll want to use a ServiceBus most of the time especially because it gives you more control over the type of messages you can send, but it also provides a nicer way to subscribe and react to different messages.
 
 ```js
 import { ServiceBus } from 'octobus.js';
