@@ -1,0 +1,6 @@
+- Message - atomic data store that has a topic and an optional payload. It also carries useful information like a unique id, a timestamp when it was created, a parentId reference pointing to the parent message etc.
+- Topic - a string of dot-delimited segments. 
+- Service or handler - function that perform some kind of a global task: sending an email, authenticating a user, adding a product to a shopping cart etc.. It can return a result which can be a promise or any other javascript value. Will receive a Context as its only argument.
+- MessageBus - central message dispatcher. Handles incoming messages and returns a response (whether is an actual result or an error). Has a router that will route the messages to different transports.
+- ServiceBus - a business logic container. Bundles together a group of handlers that can respond to various topics. It needs to be connected to a MessageBus instance, since it will proxy outgoing and incoming messages.
+- Context - the single argument that's going to be passed to handlers. Contains a reference to the message matching the topic to which the handler subscribed, but as well various helper functions to extract pins (handlers under a specific namespace), to send or publish other messages, or to call previously registered handlers.
