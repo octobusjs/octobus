@@ -18,13 +18,17 @@ npm install octobus.js
 - service functions (handlers) as first class citizens
 - inheritance is great when used with good care; composition is even better.
 
-## Motivation:
+## Benefits:
 - promotes high decoupling between the sender and the receiver of the message
 - logging and introspection of the messages
 - microservices friendly
+- dependency injection of other services
+- ability to extend existing services
+- service calls interception
+- extensions ([octobus-crud](https://github.com/viczam/octobus-crud), [hapi-octobus](https://github.com/viczam/hapi-octobus) etc.)
 
 Requirements:
-- octobus.js requires node >= 6 because of its Proxy use.
+- octobus.js requires node >= 6 because of its [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) use.
 
 ## How to use it:
 
@@ -46,13 +50,13 @@ serviceBus.connect(messageBus);
 2) We create services, which are functions that can listen and act on a specific topic.
 
 ```js
-serviceBus.subscribe('say.hello', ({ message }) => `Hello, ${message.data.name}!`);
+serviceBus.subscribe('hello', ({ message }) => `Hello, ${message.data}!`);
 ```
 
 3) Now we are able to send message to be handled by the services we previously defined.
 
 ```js
-serviceBus.send('say.hello', { name: 'John' }).then((result) => {
-  console.log(result); // should output "Hello, John!"
+serviceBus.send('hello', 'world').then((result) => {
+  console.log(result); // will output "Hello, world!"
 });
 ```
