@@ -26,6 +26,7 @@ npm install octobus.js
 - ability to extend existing services
 - service calls interception
 - extensions ([octobus-crud](https://github.com/viczam/octobus-crud), [hapi-octobus](https://github.com/viczam/hapi-octobus) etc.)
+- everything is asynchronous (promises, async / await)
 
 Requirements:
 - octobus.js requires node >= 6 because of its [Proxy](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy) use.
