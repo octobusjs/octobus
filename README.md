@@ -61,3 +61,5 @@ serviceBus.send('hello', 'world').then((result) => {
   console.log(result); // will output "Hello, world!"
 });
 ```
+
+Read [more](https://github.com/makeen-project/octobus/tree/master/docs) about it.
