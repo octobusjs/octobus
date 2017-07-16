@@ -7,7 +7,7 @@ import * as transports from './transports';
 import * as hof from './hof';
 import ServiceContainer from './ServiceContainer';
 import * as decorators from './decorators';
-import { applyDecorators } from './utils';
+import { applyDecorators, compose } from './utils';
 
 export {
   Message,
@@ -20,4 +20,5 @@ export {
   ServiceContainer,
   decorators,
   applyDecorators,
+  compose,
 };
