@@ -1,6 +1,6 @@
 # Octobus.js
 
-[![travis build](https://img.shields.io/travis/viczam/octobus.svg)](https://travis-ci.org/viczam/octobus)
+[![travis build](https://img.shields.io/travis/makeen-project/octobus.svg)](https://travis-ci.org/makeen-project/octobus)
 
 
 Octobus is a javascript library that helps you keep your code modular and extensible by creating services that respond to messages.
