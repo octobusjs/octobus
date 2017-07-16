@@ -1,6 +1,6 @@
 {
   "name": "octobus.js",
-  "version": "0.31.1",
+  "version": "0.32.0",
   "description": "An event dispatcher aimed for AOP.",
   "main": "dist/index.js",
   "scripts": {
@@ -17,18 +17,8 @@
     "type": "git",
     "url": "https://github.com/viczam/octobus"
   },
-  "keywords": [
-    "AOP",
-    "event bus",
-    "event dispatcher",
-    "EventEmitter",
-    "microservices"
-  ],
-  "files": [
-    "dist",
-    "src",
-    "README.md"
-  ],
+  "keywords": ["AOP", "event bus", "event dispatcher", "EventEmitter", "microservices"],
+  "files": ["dist", "src", "README.md"],
   "author": "Victor Zamfir <zamfir.victor@gmail.com>",
   "license": "MIT",
   "bugs": {
@@ -63,10 +53,7 @@
     "semantic-release": "^4.3.5"
   },
   "babel": {
-    "presets": [
-      "es2015",
-      "stage-0"
-    ],
+    "presets": ["es2015", "stage-0"],
     "plugins": [
       "transform-object-rest-spread",
       "transform-async-to-generator",
@@ -76,8 +63,6 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "collectCoverageFrom": [
-      "src/*.js"
-    ]
+    "collectCoverageFrom": ["src/*.js"]
   }
 }
