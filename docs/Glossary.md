@@ -1,5 +1,5 @@
-- __Message__ - atomic data store that has a topic and an optional payload. It also carries useful information like a unique id, a timestamp when it was created, a parentId reference pointing to the parent message etc.
-- __Topic__ - a string of dot-delimited segments.
+- __Message__ - atomic object that encapsulates all data needed to perform a service call. At the very minimum it has to be created with a topic and an optional data payload. It also carries useful information like a unique id, a timestamp when it was created, a parentId reference pointing to the parent message etc.
+- __Topic__ - a string of dot-delimited segments, that helps identifying services.
 - __Service__ or __handler__ - function that perform some kind of a global task: sending an email, authenticating a user, adding a product to a shopping cart etc.. It can return a result which can be a promise or any other javascript value. Will receive a Context as its only argument.
 - __MessageBus__ - central message dispatcher. Handles incoming messages and returns a response (whether is an actual result or an error). Has a router that will route the messages to different transports.
 - __ServiceBus__ - a business logic container. Bundles together a group of handlers that can respond to various topics. It needs to be connected to a MessageBus instance, since it will proxy outgoing and incoming messages.
