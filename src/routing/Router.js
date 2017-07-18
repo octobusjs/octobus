@@ -30,6 +30,10 @@ class Router {
   }
 
   findRoute(message) {
+    if (this.routes.length === 1) {
+      return this.routes[0];
+    }
+
     return this.routes.find(({ matcher }) => matcher.test(message.topic));
   }
 }
