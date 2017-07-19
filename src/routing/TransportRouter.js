@@ -9,7 +9,6 @@ class TransportRouter extends Router {
         route,
         Joi.object()
           .keys({
-            matcher: Joi.object().type(RegExp),
             transport: Joi.object().type(Transport),
           })
           .unknown()

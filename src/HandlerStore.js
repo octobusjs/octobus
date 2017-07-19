@@ -10,6 +10,11 @@ class HandlerStore {
 
   remove(item) {
     this.items = this.items.filter(_item => _item !== item);
+    return this;
+  }
+
+  hasItems() {
+    return this.items.length;
   }
 
   run(context) {

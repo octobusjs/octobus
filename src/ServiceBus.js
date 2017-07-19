@@ -2,7 +2,6 @@ import Handler from './Handler';
 import HandlerStore from './HandlerStore';
 import Context from './Context';
 import Message from './Message';
-import trimStart from 'lodash/trimStart';
 import Router from './routing/Router';
 import { applyDecorators } from './utils';
 
@@ -13,8 +12,7 @@ class ServiceBus {
 
   constructor(namespace = '', routes = []) {
     this.namespace = namespace;
-    this.router = new Router();
-    this.router.addRoutes(routes);
+    this.router = new Router(routes);
     this.subscribers = {};
   }
 
@@ -120,16 +118,23 @@ class ServiceBus {
 
   handleOutgoingMessage(message, ignoreSubscribers = false) {
     if (this.router.findRoute(message)) {
-      return this.router.process(message);
+      return this.router.transform(message);
     }
 
-    if (!ignoreSubscribers && !this.subscribers[message.topic]) {
+    if (
+      !ignoreSubscribers &&
+      (!this.subscribers[message.topic] || !this.subscribers[message.topic].hasItems())
+    ) {
       throw new Error(`Can't handle "${message.topic}" topic!`);
     }
 
-    return Object.assign(message, {
-      topic: trimStart(`${this.namespace}.${message.topic}`, '.'),
-    });
+    if (this.namespace) {
+      Object.assign(message, {
+        topic: `${this.namespace}.${message.topic}`,
+      });
+    }
+
+    return message;
   }
 
   handleIncomingMessage = async msg => {

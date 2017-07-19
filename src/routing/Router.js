@@ -8,10 +8,14 @@ class Router {
 
   addRoute(rawRoute) {
     const route = Joi.attempt(
-      rawRoute,
+      {
+        transform: message => message,
+        ...rawRoute,
+      },
       Joi.object()
         .keys({
           matcher: Joi.object().type(RegExp),
+          transform: Joi.func(),
         })
         .unknown()
     );
@@ -30,6 +34,10 @@ class Router {
   }
 
   findRoute(message) {
+    if (!this.routes.length) {
+      return undefined;
+    }
+
     if (this.routes.length === 1) {
       return this.routes[0];
     }

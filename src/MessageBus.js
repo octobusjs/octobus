@@ -44,9 +44,11 @@ class MessageBus extends EventEmitter {
       throw new Error(`Unable to find matching route for topic "${message.topic}"`);
     }
 
+    const { transport, transform } = route;
+
     return {
-      ...route,
-      message,
+      transport,
+      message: transform(message),
     };
   }
 
