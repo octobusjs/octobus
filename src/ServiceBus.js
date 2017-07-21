@@ -117,8 +117,9 @@ class ServiceBus {
   }
 
   handleOutgoingMessage(message, ignoreSubscribers = false) {
-    if (this.router.findRoute(message)) {
-      return this.router.transform(message);
+    const route = this.router.findRoute(message);
+    if (route) {
+      return route.transform(message);
     }
 
     if (
