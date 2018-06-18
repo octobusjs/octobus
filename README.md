@@ -1,6 +1,6 @@
 # Octobus.js
 
-[![travis build](https://img.shields.io/travis/octobusjs/octobus.svg)](https://travis-ci.org/makeen-project/octobus)
+[![travis build](https://img.shields.io/travis/octobusjs/octobus.svg)](https://travis-ci.org/octobusjs/octobus)
 
 
 Octobus is a javascript library that helps you keep your code modular and extensible by creating services that respond to messages.
@@ -61,5 +61,3 @@ serviceBus.send('hello', 'world').then((result) => {
   console.log(result); // will output "Hello, world!"
 });
 ```
-
-Read [more](https://github.com/makeen-project/octobus/tree/master/docs) about it.
